@@ -1,0 +1,56 @@
+captured output in the middle of a run
+▶ maths
+  ▶ add
+    ✔ adds two numbers (0.458042ms)
+    ✔ handles [brackets] and spaces (ünïcode) (0.425834ms)
+    ✖ fails on purpose (0.664708ms)
+  ✖ add (1.919667ms)
+  ﹣ skipped for now (0.048042ms) # SKIP
+  ✔ not written yet (0.051667ms) # TODO
+  ✔ duplicate name (0.047ms)
+  ✔ duplicate name (0.048333ms)
+✖ maths (2.615583ms)
+✔ trims whitespace (0.695416ms)
+✖ throws on purpose (0.143834ms)
+ℹ tests 9
+ℹ suites 2
+ℹ pass 5
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 1
+ℹ duration_ms 84.077167
+
+✖ failing tests:
+
+test at nodetest/maths.test.mjs:15:5
+✖ fails on purpose (0.664708ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  4 !== 5
+  
+      at TestContext.<anonymous> (file:///work/node_sample/nodetest/maths.test.mjs:16:14)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:831:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 4,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at nodetest/strings.test.mjs:7:1
+✖ throws on purpose (0.143834ms)
+  Error: boom
+      at TestContext.<anonymous> (file:///work/node_sample/nodetest/strings.test.mjs:8:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)

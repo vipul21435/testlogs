@@ -1,0 +1,12 @@
+{
+  "name": "testlogs-node-sample",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Small sample suites whose logs are the jest, vitest, mocha and node:test fixtures.",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "mocha": "^10.8.2",
+    "vitest": "^2.1.9"
+  }
+}

@@ -1,0 +1,59 @@
+(node:91639) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:91653) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  [2mconsole.log[22m
+    captured output in the middle of a run
+[2m[22m
+[2m      [2mat Object.log ([22m[2m[0m[36mmaths.test.js[39m[0m[2m:9:15)[22m[2m[22m
+
+[0m[7m[1m[31m FAIL [39m[22m[27m[0m [2mjest/[22m[1mmaths.test.js[22m
+  maths
+    [32m✓[39m [2mduplicate name[22m
+    [32m✓[39m [2mduplicate name[22m
+    [33m○[39m [2mskipped skipped for now[22m
+    [35m✎[39m [2mtodo not written yet[22m
+    add
+      [32m✓[39m [2madds two numbers (1 ms)[22m
+      [32m✓[39m [2mhandles [brackets] and spaces (ünïcode) (10 ms)[22m
+      [31m✕[39m [2mfails on purpose (1 ms)[22m
+
+[1m[31m  [1m● [22m[1mmaths › add › fails on purpose[39m[22m
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m5[39m
+    Received: [31m4[39m
+[2m[22m
+[2m      11 |     });[22m
+[2m      12 |     test('fails on purpose', () => {[22m
+[2m    > 13 |       expect(add(2, 2)).toBe(5);[22m
+[2m         |                         ^[22m
+[2m      14 |     });[22m
+[2m      15 |   });[22m
+[2m      16 |   test.skip('skipped for now', () => {});[22m
+[2m[22m
+[2m      [2mat Object.toBe ([22m[2m[0m[36mmaths.test.js[39m[0m[2m:13:25)[22m[2m[22m
+
+[0m[7m[1m[31m FAIL [39m[22m[27m[0m [2mjest/[22m[1mstrings.test.js[22m
+  [32m✓[39m [2mtrims whitespace (1 ms)[22m
+  [31m✕[39m [2mthrows on purpose[22m
+
+[1m[31m  [1m● [22m[1mthrows on purpose[39m[22m
+
+    boom
+[2m[22m
+[2m      3 | });[22m
+[2m      4 | test('throws on purpose', () => {[22m
+[2m    > 5 |   throw new Error('boom');[22m
+[2m        |         ^[22m
+[2m      6 | });[22m
+[2m      7 |[22m
+[2m[22m
+[2m      [2mat Object.<anonymous> ([22m[2m[0m[36mstrings.test.js[39m[0m[2m:5:9)[22m[2m[22m
+
+[1mTest Suites: [22m[1m[31m2 failed[39m[22m, 2 total
+[1mTests:       [22m[1m[31m2 failed[39m[22m, [1m[33m1 skipped[39m[22m, [1m[35m1 todo[39m[22m, [1m[32m5 passed[39m[22m, 9 total
+[1mSnapshots:   [22m0 total
+[1mTime:[22m        0.128 s, estimated 1 s
+[2mRan all test suites[22m[2m.[22m

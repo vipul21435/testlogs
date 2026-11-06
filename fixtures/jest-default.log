@@ -1,0 +1,44 @@
+FAIL jest/maths.test.js
+  ● Console
+
+    console.log
+      captured output in the middle of a run
+
+      at Object.log (maths.test.js:9:15)
+
+  ● maths › add › fails on purpose
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 5
+    Received: 4
+
+      11 |     });
+      12 |     test('fails on purpose', () => {
+    > 13 |       expect(add(2, 2)).toBe(5);
+         |                         ^
+      14 |     });
+      15 |   });
+      16 |   test.skip('skipped for now', () => {});
+
+      at Object.toBe (maths.test.js:13:25)
+
+FAIL jest/strings.test.js
+  ● throws on purpose
+
+    boom
+
+      3 | });
+      4 | test('throws on purpose', () => {
+    > 5 |   throw new Error('boom');
+        |         ^
+      6 | });
+      7 |
+
+      at Object.<anonymous> (strings.test.js:5:9)
+
+Test Suites: 2 failed, 2 total
+Tests:       2 failed, 1 skipped, 1 todo, 5 passed, 9 total
+Snapshots:   0 total
+Time:        0.167 s, estimated 1 s
+Ran all test suites.

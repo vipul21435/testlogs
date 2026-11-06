@@ -1,0 +1,43 @@
+
+
+  ✔ trims whitespace
+  1) throws on purpose
+  maths
+    - skipped for now
+    - not written yet
+    ✔ duplicate name
+    ✔ duplicate name
+    add
+      ✔ adds two numbers
+captured output in the middle of a run
+      ✔ handles [brackets] and spaces (ünïcode)
+      2) fails on purpose
+
+
+  5 passing (9ms)
+  2 pending
+  2 failing
+
+  1) throws on purpose:
+     Error: boom
+      at Context.<anonymous> (mocha/strings.spec.js:7:9)
+      at process.processImmediate (node:internal/timers:504:21)
+
+  2) maths
+       add
+         fails on purpose:
+
+      AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+4 !== 5
+
+      + expected - actual
+
+      -4
+      +5
+      
+      at Context.<anonymous> (mocha/maths.spec.js:15:14)
+      at process.processImmediate (node:internal/timers:504:21)
+
+
+

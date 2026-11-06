@@ -1,0 +1,28 @@
+ok 1 trims whitespace
+not ok 2 throws on purpose
+  boom
+  Error: boom
+      at Context.<anonymous> (mocha/strings.spec.js:7:9)
+      at process.processImmediate (node:internal/timers:504:21)
+ok 3 maths skipped for now # SKIP -
+ok 4 maths not written yet # SKIP -
+ok 5 maths duplicate name
+ok 6 maths duplicate name
+ok 7 maths add adds two numbers
+captured output in the middle of a run
+ok 8 maths add handles [brackets] and spaces (ünïcode)
+not ok 9 maths add fails on purpose
+  Expected values to be strictly equal:
+  
+  4 !== 5
+  
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  4 !== 5
+  
+      at Context.<anonymous> (mocha/maths.spec.js:15:14)
+      at process.processImmediate (node:internal/timers:504:21)
+# tests 7
+# pass 5
+# fail 2
+1..9

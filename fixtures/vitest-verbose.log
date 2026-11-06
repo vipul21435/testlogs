@@ -1,0 +1,54 @@
+
+ RUN  v2.1.9 /work/node_sample
+
+ ✓ vitest/strings.test.js > trims whitespace
+ × vitest/strings.test.js > throws on purpose
+   → boom
+stdout | vitest/maths.test.js > maths > add > handles [brackets] and spaces (ünïcode)
+captured output in the middle of a run
+
+ ✓ vitest/maths.test.js > maths > add > adds two numbers
+ ✓ vitest/maths.test.js > maths > add > handles [brackets] and spaces (ünïcode)
+ × vitest/maths.test.js > maths > add > fails on purpose
+   → expected 4 to be 5 // Object.is equality
+ ✓ vitest/maths.test.js > maths > duplicate name
+ ✓ vitest/maths.test.js > maths > duplicate name
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  vitest/maths.test.js > maths > add > fails on purpose
+AssertionError: expected 4 to be 5 // Object.is equality
+
+- Expected
++ Received
+
+- 5
++ 4
+
+ ❯ vitest/maths.test.js:15:25
+     13|     });
+     14|     test('fails on purpose', () => {
+     15|       expect(add(2, 2)).toBe(5);
+       |                         ^
+     16|     });
+     17|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  vitest/strings.test.js > throws on purpose
+Error: boom
+ ❯ vitest/strings.test.js:7:9
+      5| });
+      6| test('throws on purpose', () => {
+      7|   throw new Error('boom');
+       |         ^
+      8| });
+      9| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 5 passed | 1 skipped | 1 todo (9)
+   Start at  13:16:00
+   Duration  242ms (transform 12ms, setup 0ms, collect 12ms, tests 8ms, environment 0ms, prepare 71ms)
+
