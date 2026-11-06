@@ -13,13 +13,18 @@ def looks_like(text: str) -> bool:
 
 
 def _status(case: ET.Element) -> Status:
+    """Status from the child elements. Surefire's ``flakyFailure`` and
+    ``rerunFailure`` children sit beside a final pass, so they do not count.
+    pytest marks an expected failure ``<skipped type="pytest.xfail">``; an
+    unexpected pass has no child at all and stays ``passed``."""
     tags = {child.tag for child in case}
     if "error" in tags:
         return Status.ERROR
     if "failure" in tags:
         return Status.FAILED
-    if "skipped" in tags:
-        return Status.SKIPPED
+    skipped = case.find("skipped")
+    if skipped is not None:
+        return Status.XFAIL if skipped.get("type") == "pytest.xfail" else Status.SKIPPED
     return Status.PASSED
 
 

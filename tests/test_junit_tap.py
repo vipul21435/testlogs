@@ -10,8 +10,8 @@ def test_junit_counts_and_duration():
     assert run.format == "junit"
     c = run.counts()
     assert c["failed"] == 2 and c["error"] == 1
-    # pytest writes xfail and xpass as skipped in JUnit XML; the skip row is there too.
-    assert c["skipped"] == 2
+    # pytest writes xfail as <skipped type="pytest.xfail"> and xpass as a plain pass.
+    assert c["skipped"] == 1 and c["xfail"] == 1 and c["xpass"] == 0
     assert all(r.duration is not None for r in run.results)
 
 
@@ -49,3 +49,21 @@ def test_unknown_format_raises():
 
     with pytest.raises(ValueError):
         parse("hello world\n")
+
+
+def test_junit_other_producers_shapes():
+    xml = (
+        '<testsuites><testsuite name="pkg">'
+        '<testcase classname="pkg" name="TestA" time="0.5"/>'
+        '<testcase classname="pkg" name="TestB" time=""><flakyFailure message="x"/></testcase>'
+        '<testcase name="bare"><skipped message="later"/></testcase>'
+        '<testcase classname="pkg" name="TestC"><error message="boom"/></testcase>'
+        "</testsuite></testsuites>"
+    )
+    run = parse(xml)
+    assert [(r.id, r.status.value, r.duration) for r in run.results] == [
+        ("pkg::TestA", "passed", 0.5),
+        ("pkg::TestB", "passed", None),
+        ("bare", "skipped", None),
+        ("pkg::TestC", "error", None),
+    ]
