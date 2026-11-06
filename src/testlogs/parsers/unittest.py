@@ -30,7 +30,7 @@ _SUB = re.compile(
     r"^\s+(?P<name>\S+) \((?P<qual>[\w.]+)\) \(.*\) \.\.\. (?P<result>FAIL|ERROR|skipped.*)$"
 )
 _TAIL = re.compile(r"^.*\.\.\. " + _RESULT_RE + r"\s*$")
-_RAN = re.compile(r"^Ran \d+ tests? in [\d.]+s$")
+_RAN = re.compile(r"^Ran (?P<n>\d+) tests? in [\d.]+s$")
 
 
 def looks_like(lines: list[str]) -> bool:
@@ -56,8 +56,10 @@ def parse(lines: list[str]) -> Run:
     complete = False
     for raw in lines:
         line = raw.rstrip()
-        if _RAN.match(line):
+        m = _RAN.match(line)
+        if m:
             complete = True
+            run.summary_total = int(m.group("n"))
             continue
         m = _SUB.match(line)
         if m:

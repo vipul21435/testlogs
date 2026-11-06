@@ -85,6 +85,7 @@ def parse(lines: list[str]) -> Run:
                         "tests are not named"
                     )
             expected = int(m.group("passed")) + int(m.group("failed")) + int(m.group("ignored"))
+            run.summary_total = (run.summary_total or 0) + expected
             got = len(block_results) if block_results else len(terse_chars)
             if got != expected:
                 run.incomplete = True

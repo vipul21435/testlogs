@@ -49,6 +49,8 @@ class Run:
     results: list[TestResult] = field(default_factory=list)
     incomplete: bool = False
     notes: list[str] = field(default_factory=list)
+    # The number of tests the log's own summary line reports, when it has one.
+    summary_total: int | None = None
 
     def counts(self) -> dict[str, int]:
         out = {s.value: 0 for s in Status}
@@ -67,6 +69,7 @@ class Run:
         return {
             "format": self.format,
             "incomplete": self.incomplete,
+            "summary_total": self.summary_total,
             "notes": list(self.notes),
             "counts": self.counts(),
             "results": [r.to_dict() for r in self.results],

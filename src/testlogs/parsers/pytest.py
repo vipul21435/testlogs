@@ -45,6 +45,9 @@ _SUBTEST = re.compile(
     r"(?P<id>[^\s:]+::.*?)(?:\s+-\s+.*)?$"
 )
 _SUBTEST_COUNT = re.compile(r"(?P<n>\d+) subtests? (?P<what>passed|failed|skipped)")
+_FINAL_COUNT = re.compile(
+    r"(?P<n>\d+) (?P<sub>subtests? )?(?P<what>passed|failed|skipped|xfailed|xpassed|errors?)\b"
+)
 _SUMMARY_HEADER = re.compile(r"^=+ short test summary info =+$")
 _FINAL = re.compile(
     r"^=+ .*\b(?:passed|failed|error|errors|skipped|xfailed|xpassed|no tests ran)\b"
@@ -72,6 +75,7 @@ def parse(lines: list[str]) -> Run:
     summary: list[TestResult] = []
     durations: dict[str, float] = {}
     subfailed: dict[str, int] = {}
+    final_total: int | None = None
     in_summary = False
     complete = False
     for raw in lines:
@@ -86,6 +90,9 @@ def parse(lines: list[str]) -> Run:
             in_summary = False
             for m in _SUBTEST_COUNT.finditer(line):
                 run.notes.append(f"pytest counts {m.group('n')} subtests {m.group('what')}")
+            final_total = sum(
+                int(m.group("n")) for m in _FINAL_COUNT.finditer(line) if not m.group("sub")
+            )
             continue
         m = _DURATION.match(line)
         if m:
@@ -135,6 +142,9 @@ def parse(lines: list[str]) -> Run:
             f"{n} failing subtests in {len(subfailed)} tests: those tests are recorded as failed"
         )
     run.results = [TestResult(i, status[i], _file_of(i), durations.get(i)) for i in order]
+    if final_total is not None:
+        # pytest counts each failing subtest as one "failed" on top of its test.
+        run.summary_total = final_total - sum(subfailed.values())
     run.incomplete = not complete
     if run.incomplete:
         run.notes.append("no final summary line: the log is truncated or the run was interrupted")

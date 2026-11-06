@@ -16,6 +16,7 @@ _LEAF = re.compile(
     r"^(?P<indent>\s*)(?P<mark>✔|✓|-|\d+\))\s+(?P<name>.*?)(?:\s+\((?P<ms>\d+)ms\))?$"
 )
 _PASSING = re.compile(r"^\s*\d+ passing \([\d.]+ ?m?s\)$")
+_COUNT = re.compile(r"^\s*(?P<n>\d+) (?:passing \(.*\)|pending|failing)$")
 
 
 def looks_like(lines: list[str]) -> bool:
@@ -28,10 +29,16 @@ def parse(lines: list[str]) -> Run:
     run = Run(format="mocha")
     stack: list[tuple[int, str]] = []
     complete = False
-    for raw in lines:
+    for i, raw in enumerate(lines):
         line = raw.rstrip()
         if _PASSING.match(line):
             complete = True
+            total = 0
+            for tail in lines[i : i + 3]:
+                m = _COUNT.match(tail.rstrip())
+                if m:
+                    total += int(m.group("n"))
+            run.summary_total = total
             break
         if not line.strip():
             continue

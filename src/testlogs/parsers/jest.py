@@ -51,6 +51,7 @@ def parse(lines: list[str]) -> Run:
         if m:
             complete = True
             run.notes.append("jest totals: " + m.group("body"))
+            run.summary_total = int(m.group("body").rsplit(" ", 2)[-2])
             continue
         m = _BULLET.match(line)
         if m:

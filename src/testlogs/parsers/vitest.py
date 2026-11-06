@@ -38,6 +38,7 @@ def parse(lines: list[str]) -> Run:
         if m:
             complete = True
             run.notes.append("vitest totals: " + m.group("body"))
+            run.summary_total = int(m.group("body").rsplit("(", 1)[1].rstrip(")"))
             continue
         if line.strip().startswith(("⎯", "FAIL ")):
             in_failures = True

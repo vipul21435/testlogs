@@ -33,6 +33,7 @@ def parse(lines: list[str]) -> Run:
         m = _TOTAL.match(line)
         if m:
             complete = True
+            run.summary_total = int(m.group("n"))
             break
         m = _SUITE.match(line)
         if m:

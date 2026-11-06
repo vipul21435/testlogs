@@ -63,8 +63,26 @@ def detect_format(text: str) -> str | None:
     return None
 
 
+def _check_total(run: Run) -> Run:
+    """Note when the records and the log's own summary line disagree.
+
+    A default jest or vitest reporter names only failures, so a gap is not by
+    itself an error; it is reported, never filled in.
+    """
+    if run.summary_total is not None and run.summary_total != len(run.results):
+        run.notes.append(
+            f"the log's summary counts {run.summary_total} tests; "
+            f"{len(run.results)} records were parsed"
+        )
+    return run
+
+
 def parse(text: str, fmt: str | None = None) -> Run:
     """Parse ``text`` as ``fmt``; detect the format when ``fmt`` is ``None``."""
+    return _check_total(_parse(text, fmt))
+
+
+def _parse(text: str, fmt: str | None) -> Run:
     if fmt is None:
         fmt = detect_format(text)
     if fmt is None:
