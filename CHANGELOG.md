@@ -12,6 +12,25 @@
 - Notes use the singular for a count of one; the CLI help has a plain description.
 - `examples/real_data.sh` stops when a clone or install fails; the node sample's
   `package-lock.json` is committed.
+- pytest: `!!! KeyboardInterrupt !!!` and `!!! Interrupted: ... !!!` make a run
+  incomplete and name the test that was running; reasons holding `)` no longer drop a
+  verbose line; captured output and nested pytest sessions are not read as results;
+  grouped `SKIPPED [n] file:line` rows are counted in a note; short `-q` logs are
+  detected; a teardown error merges the same way in `-v` and `-rA`.
+- mocha: npm banners, output printed at load time and indented printed lines no longer
+  become describe titles; a describe titled `- x` is not a pending test; run times in
+  minutes (`(1m)`) close a run, and failure details are not read as tests.
+- go: `ok pkg (cached)` closes its package. cargo: terse progress counters
+  (` 87/200`) are read.
+- unittest: tests whose printed output comes before the result are recorded.
+- vitest and jest text reporters: a test file that fails to load is an `error` record
+  named by the file; jest bullets are matched to verbose names that hold `›`.
+- node:test: result-shaped lines outside the spec tree are not tests.
+- Input: JSON reports and go events of the wrong shape, a UTF-8 byte-order mark, and
+  JUnit times that are not finite numbers no longer raise; the CLI prints one line
+  when a parser fails. Long whitespace runs are capped so parsing stays linear.
+- `diff` prints the status of appeared and vanished tests and warns when the two logs
+  have different formats; `--version`; `examples/real_data.sh` pins its clones.
 
 ## 0.1.0
 
