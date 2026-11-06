@@ -21,10 +21,10 @@ git log -1 --format='more-itertools commit %H' > ../logs/SOURCE
 uv pip install -q --python .venv/bin/python -e . pytest
 PY=.venv/bin/python
 ROOT="$(pwd)"
-$PY -m pytest -p no:cacheprovider --color=no -v tests > ../logs/pytest-v.log 2>&1 || true
-$PY -m pytest -p no:cacheprovider --color=no -v -rA --durations=0 \
+$PY -m pytest -p no:cacheprovider --rootdir . --color=no -v tests > ../logs/pytest-v.log 2>&1 || true
+$PY -m pytest -p no:cacheprovider --rootdir . --color=no -v -rA --durations=0 \
   --junitxml=../logs/junit.xml tests > ../logs/pytest-rA.log 2>&1 || true
-$PY -m pytest -p no:cacheprovider --color=yes -v tests > ../logs/pytest-v-color.log 2>&1 || true
+$PY -m pytest -p no:cacheprovider --rootdir . --color=yes -v tests > ../logs/pytest-v-color.log 2>&1 || true
 $PY -m unittest -v tests.test_more tests.test_recipes > ../logs/unittest-v.log 2>&1 || true
 # The same suite at an older release, run with that release's code, for a real diff.
 OLD=v10.5.0
@@ -32,7 +32,7 @@ git fetch -q --depth 1 origin tag "$OLD"
 [ -d "../more-itertools-$OLD" ] || git worktree add -q "../more-itertools-$OLD" "$OLD"
 (
   cd "../more-itertools-$OLD"
-  PYTHONPATH=. "$ROOT/$PY" -m pytest -p no:cacheprovider --color=no \
+  PYTHONPATH=. "$ROOT/$PY" -m pytest -p no:cacheprovider --rootdir . --color=no \
     -v tests > ../logs/old/pytest-v.log 2>&1 || true
 )
 # A small JS suite, bytes.js (MIT), under the mocha installed in fixtures/node_sample
