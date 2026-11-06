@@ -94,7 +94,7 @@ either log is incomplete). The Python API is `testlogs.parse(text, fmt=None)`,
 
 | format name | runner and mode | fixture |
 |---|---|---|
-| `pytest` | pytest `-v`, `-q`, `-rA` summary, `-s`, pytest-xdist `-n`, colour | real run, pytest 9.2.0 |
+| `pytest` | pytest `-v`, `-q`, `-rA` summary, `-s`, colour, pytest-xdist `-n`, pytest-rerunfailures | real run, pytest 9.2.0 |
 | `junit` | JUnit XML (`testcase` elements; tested on pytest's `--junitxml`) | real run, pytest 9.2.0 |
 | `unittest` | `python -m unittest -v` (3.10 and 3.11+ line shapes, doctests, subTest) | real run, Python 3.12 |
 | `jest` | jest default and `--verbose` | real run, jest 29.7.0 |
@@ -107,7 +107,7 @@ either log is incomplete). The Python API is `testlogs.parse(text, fmt=None)`,
 | `cargo` | `cargo test`, pretty and `--format terse` | written to the documented format: cargo is not installed here |
 
 The Python fixtures come from `bash fixtures/regen.sh` (pytest under uv, with
-`uv run --with pytest-xdist` for the xdist log) and the node ones from
+`uv run --with` pytest-xdist 3.8.0 and pytest-rerunfailures 16.1 for those two logs) and the node ones from
 `bash fixtures/node_sample/regen.sh` after `npm install` in `fixtures/node_sample/`.
 Both scripts replace the checkout path with `/work`, the home directory with
 `/home/user`, and the JUnit host name and timestamp with neutral values.
@@ -145,7 +145,9 @@ Both scripts replace the checkout path with `/work`, the home directory with
    an `-rA` short summary is present its rows override the verbose status, because a
    verbose line can be split by captured output and a summary row cannot.
    `SUBFAILED(...) id` rows mark their parent failed; `--durations` tables fill
-   `duration`.
+   `duration`. pytest-rerunfailures' `id RERUN` lines are counted, not recorded: the
+   test's last status is its record, and a note names every test that passed only on
+   a rerun, since that is the flaky case a diff would otherwise hide.
 6. **Subtests**. pytest 9 runs `unittest` subtests itself
    ([pytest docs](https://docs.pytest.org/en/stable/how-to/subtests.html)). Measured
    here with pytest 9.2.0: for a `unittest.TestCase.subTest` failure the parent line
