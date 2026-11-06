@@ -160,20 +160,24 @@ Both scripts replace the checkout path with `/work`, the home directory with
    `file::outer > inner > name` (mocha's spec reporter prints no file, so its ids have
    none). node:test's closing `✔ suite` lines are recognised as summaries, not tests.
    Duplicate names are kept as separate records.
-8. **go and cargo**. go ids are `package::TestName/subtest` and cargo ids
+8. **JUnit XML**. Each `testcase` is a record with id `classname::name` and duration
+   from `time`; the status comes from its `error`, `failure` or `skipped` child, and
+   `<skipped type="pytest.xfail">` is read as xfail. Surefire's `flakyFailure` and
+   `rerunFailure` children sit beside a final pass and do not make the test failed.
+9. **go and cargo**. go ids are `package::TestName/subtest` and cargo ids
    `target::module::test`, because the same name can exist in two packages or test
    binaries. The go `-json` field names follow
    [cmd/test2json](https://pkg.go.dev/cmd/test2json); cargo's pretty and terse shapes
    follow the [rustc test harness docs](https://doc.rust-lang.org/rustc/tests/index.html).
    Terse output names only failures, so its passing and ignored tests are counted in a
    note instead of being given invented ids.
-9. **Diff** (`testlogs.diff`). Records are grouped by id (or by `key(id)`); a
-   duplicated id collapses to one status, failure winning over pass. Then
-   failed/error -> passed/xpass is *fixed*, passed/xpass -> failed/error is *broken*,
-   ids on one side only are *appeared* or *vanished*, and any other change (skipped ->
-   passed, say) is listed under *other changes*. Both incomplete flags travel with the
-   diff, so a truncated side is printed as a warning next to its "vanished" tests.
-10. **Id normalisation** (`testlogs.normalise_id`). `tests/test_a.py::C::t[p]`,
+10. **Diff** (`testlogs.diff`). Records are grouped by id (or by `key(id)`); a
+    duplicated id collapses to one status, failure winning over pass. Then
+    failed/error -> passed/xpass is *fixed*, passed/xpass -> failed/error is *broken*,
+    ids on one side only are *appeared* or *vanished*, and any other change (skipped ->
+    passed, say) is listed under *other changes*. Both incomplete flags travel with the
+    diff, so a truncated side is printed as a warning next to its "vanished" tests.
+11. **Id normalisation** (`testlogs.normalise_id`). `tests/test_a.py::C::t[p]`,
     `tests.test_a.C::t[p]` (pytest's JUnit) and `tests.test_a.C.t` (unittest) all map to
     `tests.test_a.C.t[p]`: the `.py` path becomes a dotted module and `::` becomes `.`,
     leaving the parameter brackets alone.
@@ -232,8 +236,8 @@ read as a complete, smaller run. The test suite also cuts 14 fixture logs at eve
 before their closing line (565 cuts) and checks each is incomplete
 (`tests/test_truncation.py`).
 
-Tests: `uv run pytest -q --cov=testlogs` gives 114 passed and 96 % line coverage
-(987 statements, 35 missed) in 0.3 s; the same suite passes on Python 3.10.
+Tests: `uv run pytest -q --cov=testlogs` gives 116 passed and 96 % line coverage
+(988 statements, 35 missed) in 0.35 s; the same suite passes on Python 3.10.
 
 ## Limitations
 
@@ -256,6 +260,8 @@ Tests: `uv run pytest -q --cov=testlogs` gives 114 passed and 96 % line coverage
   node:test TAP ids join levels differently (`a b c` and `a > b > c`).
 - pytest prints non-ASCII parameter ids escaped (`\xfc`) unless configured otherwise;
   the parser keeps whatever the log says. `normalise_id` does not undo the escaping.
+- pytest writes an unexpected pass (xpass) to JUnit XML as a plain pass, so a JUnit
+  record says `passed` where the `-v` log says `xpass`.
 - unittest `file` is the dotted module, not a path; for a doctest it is the module the
   docstring lives in.
 - Detection is heuristic; pass `--format` for a log it cannot place. Logs that mix two
