@@ -4,6 +4,8 @@ Verbose prints one line per test, ``✓ file > suite > name 3ms`` or ``×``; the
 default reporter prints a ``❯ file (N tests | 1 failed) 5ms`` line per file and
 names only the failures under it. The ``Tests  2 failed | 5 passed (9)`` line
 closes the run. Lines joined by `` > `` keep the file as the first segment.
+A test file that fails to load has no test lines; its `` FAIL  file [ file ]``
+line under "Failed Suites" becomes one error record whose id is the file.
 """
 
 from __future__ import annotations
@@ -16,6 +18,9 @@ _LINE = re.compile(
     r"^\s*(?P<mark>✓|×|↓|✗)\s+(?P<path>.+?)(?:\s+(?P<ms>[\d.]+)ms)?(?:\s+\[skipped\])?$"
 )
 _FILE = re.compile(r"^\s*(?:❯|✓|×)\s+(?P<file>\S+\.[cm]?[jt]sx?)\s+\((?P<n>\d+) tests?[^)]*\)")
+# Under "Failed Suites": " FAIL  file [ file ]" for a test file that failed to load.
+_SUITE_FAIL = re.compile(r"^\s*FAIL\s+(?P<file>\S+) \[ .* \]$")
+_FILES = re.compile(r"^\s*Test Files\s+(?P<body>.*\(\d+\))$")
 _TOTAL = re.compile(r"^\s*Tests\s+(?P<body>.*\(\d+\))$")
 _MARKS = {"✓": Status.PASSED, "×": Status.FAILED, "✗": Status.FAILED, "↓": Status.SKIPPED}
 
@@ -32,6 +37,7 @@ def parse(lines: list[str]) -> Run:
     complete = False
     default_mode = False
     in_failures = False
+    failed_files: set[str] = set()
     for raw in lines:
         line = raw.rstrip()
         m = _TOTAL.match(line)
@@ -40,9 +46,19 @@ def parse(lines: list[str]) -> Run:
             run.notes.append("vitest totals: " + m.group("body"))
             run.summary_total = int(m.group("body").rsplit("(", 1)[1].rstrip(")"))
             continue
+        m = _FILES.match(line)
+        if m:
+            run.notes.append("vitest test files: " + m.group("body").strip())
+            continue
         if line.strip().startswith(("⎯", "FAIL ")):
             in_failures = True
         if in_failures:
+            m = _SUITE_FAIL.match(line)
+            if m and m.group("file") not in failed_files:
+                # The file never ran, so it has no test lines; record it as one error,
+                # as the JSON reporter does.
+                failed_files.add(m.group("file"))
+                run.results.append(TestResult(m.group("file"), Status.ERROR, m.group("file")))
             continue
         m = _FILE.match(line)
         if m:

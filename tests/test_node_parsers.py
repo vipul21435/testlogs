@@ -143,3 +143,16 @@ def test_json_report_suite_failure_interruption_and_total():
     assert run.summary_total == 3
     assert any("suite failed with no test results" in n for n in run.notes)
     assert any("summary counts 3 tests; 2 records" in n for n in run.notes)
+
+
+def test_vitest_text_reporters_record_a_suite_that_fails_to_load():
+    broken = "vitest-broken/broken.test.js"
+    for name in ("vitest-verbose-broken.log", "vitest-default-broken.log"):
+        run = parse((FIX / name).read_text(encoding="utf-8"))
+        assert run.format == "vitest" and not run.incomplete
+        by = {r.id: r.status for r in run.results}
+        assert by[broken] is Status.ERROR
+        assert by["vitest-broken/fine.test.js::fails"] is Status.FAILED
+        assert "vitest test files: 2 failed (2)" in run.notes
+    report = parse((FIX / "vitest-report-broken.json").read_text(encoding="utf-8"))
+    assert [r.status for r in report.results if r.id.endswith(broken)] == [Status.ERROR]

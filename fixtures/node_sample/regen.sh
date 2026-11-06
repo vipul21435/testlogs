@@ -17,6 +17,11 @@ V="npx vitest run --config vitest.config.mjs"
 $V > $OUT/vitest-default.log 2>&1
 $V --reporter=verbose > $OUT/vitest-verbose.log 2>&1
 $V --reporter=json --outputFile=$OUT/vitest-report.json > /dev/null 2>&1
+# A test file that fails to load (it imports a missing module) beside a normal one.
+VB="npx vitest run --config vitest-broken.config.mjs"
+$VB > $OUT/vitest-default-broken.log 2>&1
+$VB --reporter=verbose > $OUT/vitest-verbose-broken.log 2>&1
+$VB --reporter=json --outputFile=$OUT/vitest-report-broken.json > /dev/null 2>&1
 M="npx mocha mocha/maths.spec.js mocha/strings.spec.js"
 $M --reporter spec > $OUT/mocha-spec.log 2>&1
 $M --reporter tap > $OUT/mocha-tap.log 2>&1
