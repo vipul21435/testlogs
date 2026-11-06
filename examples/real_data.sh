@@ -26,7 +26,7 @@ git fetch -q --depth 1 origin tag "$OLD"
 (cd "../more-itertools-$OLD" && PYTHONPATH=. "$ROOT/$PY" -m pytest -p no:cacheprovider --color=no \
   -v tests > ../logs/old/pytest-v.log 2>&1)
 # A small JS suite, bytes.js (MIT), under the mocha installed in fixtures/node_sample
-# (run "npm install" there first). Its tests need no other package.
+# (run "npm ci" there first). Its tests need no other package.
 MOCHA="$REPO/fixtures/node_sample/node_modules/.bin/mocha"
 if [ -x "$MOCHA" ]; then
   mkdir -p ../logs/js

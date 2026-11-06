@@ -108,7 +108,8 @@ either log is incomplete). The Python API is `testlogs.parse(text, fmt=None)`,
 
 The Python fixtures come from `bash fixtures/regen.sh` (pytest under uv, with
 `uv run --with` pytest-xdist 3.8.0 and pytest-rerunfailures 16.1 for those two logs) and the node ones from
-`bash fixtures/node_sample/regen.sh` after `npm install` in `fixtures/node_sample/`.
+`bash fixtures/node_sample/regen.sh` after `npm ci` in `fixtures/node_sample/`, which installs
+the versions pinned in its `package-lock.json`.
 Both scripts replace the checkout path with `/work`, the home directory with
 `/home/user`, and the JUnit host name and timestamp with neutral values.
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Regenerate the node runner fixtures by really running the sample suites.
-# Run from the repo root after "npm install" in fixtures/node_sample:
+# Run from the repo root after "npm ci" in fixtures/node_sample (package-lock.json pins
+# the jest, vitest and mocha versions the fixtures were made with):
 #   bash fixtures/node_sample/regen.sh
 set -u
 cd "$(dirname "$0")"
