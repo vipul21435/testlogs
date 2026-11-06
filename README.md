@@ -240,7 +240,8 @@ Both scripts replace the checkout path with `/work`, the home directory with
    each file and describe block as a point ending in `{`, its tests indented below and
    a `}` at the point's own indent
    ([vitest reporters](https://vitest.dev/guide/reporters)); the TAP 14 specification
-   has no such blocks. testlogs reads that point as a header, takes `# time=1.2ms` as
+   has no such blocks. When indented lines or a `}` follow, testlogs reads that point
+   as a header (otherwise the `{` is part of a test name), takes `# time=1.2ms` as
    the duration, and a block cut before its `}` makes the run incomplete. vitest
    writes a verbose line as mark, name and duration with one space between them, so
    a name with a space at either end, or an empty name (`suite > `), is kept as the
@@ -346,8 +347,8 @@ read as a complete, smaller run. The test suite also cuts 29 fixture logs at eve
 before their closing line (1,067 cuts) and checks each is incomplete
 (`tests/test_truncation.py`).
 
-Tests: `uv run pytest -q --cov=testlogs` gives 220 passed and 98 % line coverage
-(1453 statements, 29 missed), in 1.5 s on the machine used here while it ran other jobs
+Tests: `uv run pytest -q --cov=testlogs` gives 221 passed and 98 % line coverage
+(1458 statements, 29 missed), in 1.1 s on the machine used here while it ran other jobs
 (load average about 8); the same suite passes on Python 3.10.20
 (`uv run --isolated --python 3.10 --with pytest --with-editable . python -m pytest -q`).
 
@@ -381,24 +382,24 @@ JSON written by the same run (for a JSON log, its own fields); both are read by 
 patterns, not with testlogs; for the JUnit file the summary column counts its
 `testcase` elements. Parse time is the median of 9 calls of `testlogs.parse`; the
 range is over three runs of the script on the same laptop as above (load average
-about 8).
+about 8). A time shown as 0.0 is under 0.05 ms.
 
 | log | format | lines | records | testlogs counts | summary line | JSON report | agree | parse time (ms) |
 |---|---|---|---|---|---|---|---|---|
-| ms jest default | jest | 18 | 0 | - (summary_total 167) | 167/0/0/167 | 167/0/0/167 | total only | 0.1-0.2 |
-| ms jest --verbose | jest | 202 | 167 | 167/0/0/167 | 167/0/0/167 | 167/0/0/167 | yes | 2.2-2.3 |
-| ms jest --json | jest-json | 1 | 167 | 167/0/0/167 | - | 167/0/0/167 | yes | 1.0-1.3 |
-| ms jest --verbose, broken | jest | 219 | 167 | 166/1/0/167 | 166/1/0/167 | 166/1/0/167 | yes | 2.2-2.5 |
-| ms jest --json, broken | jest-json | 1 | 167 | 166/1/0/167 | - | 166/1/0/167 | yes | 1.2-1.5 |
-| ufo vitest default | vitest | 9 | 0 | - (summary_total 489) | 489/0/0/489 | 489/0/0/489 | total only | 0.1 |
-| ufo vitest verbose | vitest | 498 | 489 | 489/0/0/489 | 489/0/0/489 | 489/0/0/489 | yes | 9.3-11.8 |
-| ufo vitest tap | tap | 653 | 489 | 489/0/0/489 | - | 489/0/0/489 | yes | 11.2-13.0 |
-| ufo vitest tap-flat | tap | 491 | 489 | 489/0/0/489 | - | 489/0/0/489 | yes | 13.0-14.2 |
-| ufo vitest junit | junit | 1,007 | 489 | 489/0/0/489 | 489/0/0/489 | 489/0/0/489 | yes | 2.7-3.2 |
-| ufo vitest json | jest-json | 1 | 489 | 489/0/0/489 | - | 489/0/0/489 | yes | 2.2-2.9 |
-| ufo vitest verbose, broken | vitest | 521 | 489 | 488/1/0/489 | 488/1/0/489 | 488/1/0/489 | yes | 10.1-11.4 |
-| ufo vitest tap, broken | tap | 661 | 489 | 488/1/0/489 | - | 488/1/0/489 | yes | 10.6-12.7 |
-| ufo vitest json, broken | jest-json | 1 | 489 | 488/1/0/489 | - | 488/1/0/489 | yes | 2.4-2.6 |
+| ms jest default | jest | 18 | 0 | - (summary_total 167) | 167/0/0/167 | 167/0/0/167 | total only | 0.1 |
+| ms jest --verbose | jest | 202 | 167 | 167/0/0/167 | 167/0/0/167 | 167/0/0/167 | yes | 1.5-1.7 |
+| ms jest --json | jest-json | 1 | 167 | 167/0/0/167 | - | 167/0/0/167 | yes | 0.8 |
+| ms jest --verbose, broken | jest | 219 | 167 | 166/1/0/167 | 166/1/0/167 | 166/1/0/167 | yes | 1.6-1.8 |
+| ms jest --json, broken | jest-json | 1 | 167 | 166/1/0/167 | - | 166/1/0/167 | yes | 0.9-1.0 |
+| ufo vitest default | vitest | 9 | 0 | - (summary_total 489) | 489/0/0/489 | 489/0/0/489 | total only | 0.0 |
+| ufo vitest verbose | vitest | 498 | 489 | 489/0/0/489 | 489/0/0/489 | 489/0/0/489 | yes | 7.8-8.1 |
+| ufo vitest tap | tap | 653 | 489 | 489/0/0/489 | - | 489/0/0/489 | yes | 8.7-9.0 |
+| ufo vitest tap-flat | tap | 491 | 489 | 489/0/0/489 | - | 489/0/0/489 | yes | 10.1-10.2 |
+| ufo vitest junit | junit | 1,007 | 489 | 489/0/0/489 | 489/0/0/489 | 489/0/0/489 | yes | 2.2-2.3 |
+| ufo vitest json | jest-json | 1 | 489 | 489/0/0/489 | - | 489/0/0/489 | yes | 1.8-1.9 |
+| ufo vitest verbose, broken | vitest | 521 | 489 | 488/1/0/489 | 488/1/0/489 | 488/1/0/489 | yes | 7.9-8.4 |
+| ufo vitest tap, broken | tap | 661 | 489 | 488/1/0/489 | - | 488/1/0/489 | yes | 8.7-9.8 |
+| ufo vitest json, broken | jest-json | 1 | 489 | 488/1/0/489 | - | 488/1/0/489 | yes | 1.7-1.9 |
 
 None of the logs is reported incomplete. The default reporters of jest 30 and of
 vitest 4 (when not writing to a terminal) name no passing test, so those two logs give
