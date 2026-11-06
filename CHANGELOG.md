@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- unittest: on Python 3.10 a test whose `subTest` fails no longer takes the next
+  test's result (the two heads on one line are split, and the `FAIL: ... (i=1)` header
+  gives the status); lines printed after `Ran N tests` are not results; a failing
+  `setUpClass` is one `error` record on 3.10 as on 3.12.
+- pytest: under `-s` a pytester session glued to the outer id is skipped and the outer
+  test gets its status; a final-shaped line printed by a running test, or followed by
+  results, no longer marks the run complete; with `-q`, a passing test's teardown error
+  is not counted twice in `summary_total`.
+- JUnit: pytest's second `<testcase>` for a teardown error is merged into its test.
+- vitest: `stdout |` and `stderr |` blocks are not read as results.
+- mocha: printed lines with the check mark the run does not use are dropped.
+- `examples/real_data.sh` passes `--rootdir .` to pytest.
+
 - pytest: a summary row's id is no longer cut at a ` - ` inside the parameter brackets
   (`test_p[a - b]` gave a second, phantom record `test_p[a`).
 - TAP: names with an escaped `\#` are read instead of dropped, a `#` comment that is not

@@ -331,13 +331,13 @@ run, 0 fixed, 0 broken, 119 appeared, 12 vanished, 0 other.
 
 Truncation (same `real_data.py` run): each of the five logs cut at 50 random byte offsets (seed 0): 50 of 50 cut
 copies of every log are reported incomplete or are rejected as unrecognisable; none is
-read as a complete, smaller run. The test suite also cuts 24 fixture logs at every line
-before their closing line (914 cuts) and checks each is incomplete
+read as a complete, smaller run. The test suite also cuts 27 fixture logs at every line
+before their closing line (1,029 cuts) and checks each is incomplete
 (`tests/test_truncation.py`).
 
-Tests: `uv run pytest -q --cov=testlogs` gives 187 passed and 97 % line coverage
-(1317 statements, 33 missed), in under a second on the machine used here; the same suite
-passes on Python 3.10.20
+Tests: `uv run pytest -q --cov=testlogs` gives 208 passed and 98 % line coverage
+(1428 statements, 28 missed), in 1.9 s on the machine used here while it ran other jobs
+(load average about 50); the same suite passes on Python 3.10.20
 (`uv run --isolated --python 3.10 --with pytest --with-editable . python -m pytest -q`).
 
 ## Limitations
