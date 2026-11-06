@@ -1,0 +1,31 @@
+test_line_ending_ok_then_fail (fixtures.unittest_sample.test_print.Printing.test_line_ending_ok_then_fail) ... look
+FAIL
+test_line_then_pass (fixtures.unittest_sample.test_print.Printing.test_line_then_pass) ... hello
+ok
+test_no_newline_then_fail (fixtures.unittest_sample.test_print.Printing.test_no_newline_then_fail) ... partialFAIL
+test_no_newline_then_pass (fixtures.unittest_sample.test_print.Printing.test_no_newline_then_pass) ... xok
+test_quiet (fixtures.unittest_sample.test_print.Printing.test_quiet) ... ok
+test_two_lines_then_skip (fixtures.unittest_sample.test_print.Printing.test_two_lines_then_skip) ... one
+two
+skipped 'not here'
+
+======================================================================
+FAIL: test_line_ending_ok_then_fail (fixtures.unittest_sample.test_print.Printing.test_line_ending_ok_then_fail)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/fixtures/unittest_sample/test_print.py", line 16, in test_line_ending_ok_then_fail
+    self.fail("on purpose")
+AssertionError: on purpose
+
+======================================================================
+FAIL: test_no_newline_then_fail (fixtures.unittest_sample.test_print.Printing.test_no_newline_then_fail)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/fixtures/unittest_sample/test_print.py", line 20, in test_no_newline_then_fail
+    self.fail("on purpose")
+AssertionError: on purpose
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.000s
+
+FAILED (failures=2, skipped=1)

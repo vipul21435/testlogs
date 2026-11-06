@@ -38,6 +38,9 @@ $P -v -rA fixtures/edge_sample > fixtures/pytest-rA-edge.log 2>&1
 
 # unittest -v on its own sample (kept out of pytest_sample so the pytest logs stay the same).
 $U fixtures.unittest_sample.test_unit > fixtures/unittest-v.log 2>&1
+# Tests that print: with unbuffered stdout (a terminal, or PYTHONUNBUFFERED=1 in CI) the
+# output lands after " ... " and the result follows it on the same or a later line.
+PYTHONUNBUFFERED=1 $U fixtures.unittest_sample.test_print > fixtures/unittest-v-print.log 2>&1
 
 # subTest cases, under pytest (which reports subtests itself from version 9) and unittest.
 T=fixtures/subtests_sample/test_subtests.py

@@ -52,3 +52,18 @@ def test_python310_and_doctest_lines_get_distinct_ids():
         ("pkg.more.chunked", "pkg.more"),
     ]
     assert not [n for n in run.notes if "summary counts" in n]
+
+
+def test_output_printed_after_the_dots_keeps_every_test():
+    run = parse((FIX / "unittest-v-print.log").read_text())
+    assert run.format == "unittest" and not run.incomplete
+    got = {r.id.rsplit(".", 1)[1]: r.status.value for r in run.results}
+    assert got == {
+        "test_line_ending_ok_then_fail": "failed",
+        "test_line_then_pass": "passed",
+        "test_no_newline_then_fail": "failed",
+        "test_no_newline_then_pass": "passed",
+        "test_quiet": "passed",
+        "test_two_lines_then_skip": "skipped",
+    }
+    assert run.summary_total == len(run.results)
