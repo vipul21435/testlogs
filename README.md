@@ -1,20 +1,33 @@
 # testlogs
 
-Turn any test runner's output into per-test results, and diff two runs.
+[![ci](https://github.com/vipul21435/testlogs/actions/workflows/ci.yml/badge.svg)](https://github.com/vipul21435/testlogs/actions/workflows/ci.yml)
+
+testlogs reads the output of pytest, unittest, jest, vitest, mocha, node:test, TAP,
+JUnit XML, go test and cargo test into one record per test (id, file, status,
+duration), and diffs two runs into fixed, broken, appeared and vanished tests. A log
+that was cut off is flagged incomplete instead of being read as a smaller passing run.
+
+On the 771-test suite of more-itertools, the `-v`, colour, `-rA` and JUnit logs of one
+run give the same 771 records, and 250 of 250 randomly cut copies of five logs are
+reported incomplete or rejected (`examples/real_data.py`, see
+[Results](#results-on-real-public-data)).
 
 ## Why this is hard
 
-Test runners write for people, not for programs. A pytest log mixes progress lines,
-captured stdout, tracebacks and a short summary; with `-s` a test's own output lands
-between its id and its status, and with pytest-xdist two workers interleave their lines.
-Colour codes and carriage-return progress bars break naive line matching. Parametrised
-ids carry spaces, brackets and non-ASCII characters, and duplicate names are legal in
-jest, vitest, mocha and node:test. Default reporters (jest, vitest, cargo `--format
-terse`) name only the failures. pytest 9 reports a `unittest` test whose subtest failed
-as `PASSED` and counts the subtest failure separately. And a log cut off by a timeout
-looks like a smaller green run unless the parser checks for the line that closes the
-run. Each of these turns into a wrong "this test passed" or "this test vanished" when
-two runs are compared.
+Test runners write for people, not for programs, and each of these turns into a wrong
+"this test passed" or "this test vanished" when two runs are compared:
+
+- Captured output sits between an id and its status (pytest `-s`, unittest with
+  unbuffered stdout), and pytest-xdist workers interleave their lines.
+- Colour codes, carriage-return progress bars, npm banners and printed lines that look
+  like results break naive line matching.
+- Parametrised ids carry spaces, brackets, ` - `, `)` and non-ASCII characters, and
+  duplicate names are legal in jest, vitest, mocha and node:test.
+- Default reporters (jest, vitest, cargo `--format terse`, pytest `-q`) name only the
+  failures, and pytest 9 reports a `unittest` test whose subtest failed as `PASSED`.
+- A run cut off by a timeout, or interrupted, looks like a smaller green run unless the
+  parser checks for the line that closes the run and for pytest's `!!! Interrupted`
+  banner.
 
 ## Install
 
@@ -28,7 +41,15 @@ then `uv pip install -e ".[dev]"` and `uv run pytest -q`.
 
 ## Quickstart
 
-Two runs of the bundled pytest sample are in `fixtures/`. Diff them:
+The sample logs live in this repository's `fixtures/`, which the installed package
+does not include, so start from a clone:
+
+```
+git clone https://github.com/vipul21435/testlogs && cd testlogs
+pip install .
+```
+
+Two runs of the pytest sample in `fixtures/` (made by `fixtures/regen.sh`). Diff them:
 
 ```
 $ testlogs diff fixtures/pytest-v-before.log fixtures/pytest-v-after.log
@@ -64,6 +85,18 @@ passed  TestParse  0.010s
    note: 1 test started but never finished: TestRender
 ```
 
+pytest prints its final line even when a run is interrupted (here a test raised
+`KeyboardInterrupt`, as a timeout handler would), so the `!!!` banner is checked too:
+
+```
+$ testlogs parse fixtures/pytest-v-interrupt.log
+passed  fixtures/interrupt_sample/test_interrupt.py::test_first
+-- pytest: 1 passed  (incomplete)
+   note: pytest printed 'KeyboardInterrupt': stopped by the user or a timeout
+   note: fixtures/interrupt_sample/test_interrupt.py::test_interrupted started and has no status
+   note: pytest collected 4 tests; 1 has a status
+```
+
 A failing subtest makes its test failed, in every format, and `--normalise-ids` lets
 a pytest log be compared with a `unittest -v` log of the same suite:
 
@@ -90,7 +123,9 @@ either log is incomplete). The Python API is `testlogs.parse(text, fmt=None)`,
 `testlogs.diff_runs(before, after, key=None)` and `testlogs.normalise_id`; see
 `examples/diff_two_runs.py`.
 
-## Formats
+## How it works
+
+### Formats
 
 | format name | runner and mode | fixture |
 |---|---|---|
@@ -113,12 +148,15 @@ the versions pinned in its `package-lock.json`.
 Both scripts replace the checkout path with `/work`, the home directory with
 `/home/user`, and the JUnit host name and timestamp with neutral values.
 
-## How it works
+### Method
 
 1. **Cleaning** (`testlogs.clean`). ANSI escape sequences are removed; each line is
    replayed the way a terminal would, so the text after the last carriage return wins;
-   a CI log's per-line job, step and ISO timestamp prefix is dropped. Parsers see
-   plain lines.
+   a CI log's per-line job, step and ISO timestamp prefix is dropped; a leading UTF-8
+   byte-order mark is removed. A whitespace run longer than 256 characters is cut to
+   256, because the lazy id patterns cost the square of such a run (a line with
+   40,000 spaces took seconds before the cut; `tests/test_clean.py` holds each parser
+   to under 0.5 s on it). Parsers see plain lines.
 2. **Detection** (`testlogs.parsers.detect_format`). XML with `testcase` and JSON with
    `testResults` are checked first, then go `-json` events, then each line parser's
    `looks_like` in a fixed order (pytest, go, cargo, unittest, jest, vitest, node:test,
@@ -153,6 +191,20 @@ Both scripts replace the checkout path with `/work`, the home directory with
    `duration`. pytest-rerunfailures' `id RERUN` lines are counted, not recorded: the
    test's last status is its record, and a note names every test that passed only on
    a rerun, since that is the flaky case a diff would otherwise hide.
+   A skip or xfail reason may hold `)` (`XFAIL (bug (see #1))`). Lines inside the
+   FAILURES, ERRORS and PASSES sections are captured output and are not read as
+   results, and a whole pytest session printed by a test (pytester) is skipped from
+   its `test session starts` line to its own final line. pytest still prints its final
+   line after `!!! KeyboardInterrupt !!!`, `!!! Interrupted: 1 error during collection
+   !!!` or `!!! stopping after 1 failures !!!`, so those banners make the run
+   incomplete, and a note names the test that was running. A failed call followed by
+   a teardown error is `failed` and a pass followed by one is `error`, in `-v` and
+   `-rA` alike; pytest counts such a test twice, and `summary_total` counts it once.
+   `-rA` groups skips by location (`SKIPPED [3] file:18: reason`), so those rows add
+   a count to a note, not records. unittest has the same split: with unbuffered
+   stdout it writes a test's output after ` ... ` and the result after that
+   (`... xok`, or `... hello` and `ok` on the next line); a result word that only
+   ends a line of output is kept as a guess until the next line.
 6. **Subtests**. pytest 9.0 added a built-in `subtests` fixture
    ([pytest docs](https://docs.pytest.org/en/stable/how-to/subtests.html)). That page
    does not cover `unittest.TestCase.subTest`; what follows is measured here with
@@ -167,7 +219,16 @@ Both scripts replace the checkout path with `/work`, the home directory with
 7. **JS reporters**. jest, vitest, mocha and node:test print describe blocks as an
    indented tree; a stack of `(indent, name)` pairs gives each test the id
    `file::outer > inner > name` (mocha's spec reporter prints no file, so its ids have
-   none). node:test's closing `✔ suite` lines are recognised as summaries, not tests.
+   none). node:test's closing `✔ suite` lines are recognised as summaries, not tests,
+   and a result-shaped line deeper than the tree allows is a test's own output. mocha
+   indents two spaces per level from two (the root suite has no title) and prints a
+   blank line before each top-level suite, so a line at indent 0 (npm's
+   `> name@version script` banner, output printed while a file loads) or an indented
+   printed line where no suite can start is not a describe title; a title is followed
+   by deeper lines, which also tells a describe named `- x` from a pending test.
+   mocha prints its run time with `ms()`, so `7 passing (1m)` closes a run as well as
+   `(12ms)`. A vitest or jest test file that fails to load becomes one `error` record
+   whose id is the file, as in their JSON reports.
    Duplicate names are kept as separate records. In TAP, an `ok N - suite` line that
    closes an indented block is the suite's summary, not a test, and the YAML
    `duration_ms` under it is not given to its last child. Only an unescaped `#` starts
@@ -193,6 +254,10 @@ Both scripts replace the checkout path with `/work`, the home directory with
     ids on one side only are *appeared* or *vanished*, and any other change (skipped ->
     passed, say) is listed under *other changes*. Both incomplete flags travel with the
     diff, so a truncated side is printed as a warning next to its "vanished" tests.
+    Appeared and vanished ids are printed with their status (`id (failed)`; in JSON,
+    `after_status` and `before_status`), and two logs of different formats get a
+    `warning: formats differ (pytest vs jest)` unless `--normalise-ids` is given,
+    which exists to compare formats.
 11. **Id normalisation** (`testlogs.normalise_id`). `tests/test_a.py::C::t[p]`,
     `tests.test_a.C::t[p]` (pytest's JUnit) and `tests.test_a.C.t` (unittest) all map to
     `tests.test_a.C.t[p]`: the `.py` path becomes a dotted module and `::` becomes `.`,
@@ -229,18 +294,22 @@ the time; the range is over three such runs, and other machines will differ.
 
 | log | format | size | lines | records | passed | summary count | incomplete | parse time (ms) |
 |---|---|---|---|---|---|---|---|---|
-| pytest -v | pytest | 0.07 MB | 863 | 771 | 771 | 771 | no | 6.3-8.8 |
-| pytest -v, colour | pytest | 0.08 MB | 863 | 771 | 771 | 771 | no | 7.4-10.6 |
-| pytest -v -rA --durations=0 | pytest | 2.01 MB | 23,047 | 771 | 771 | 771 | no | 200-228 |
-| pytest --junitxml | junit | 0.07 MB | 1 | 771 | 771 | - | no | 1.7-2.0 |
-| python -m unittest -v | unittest | 0.08 MB | 1,231 | 935 | 935 | 935 | no | 5.8-6.8 |
+| pytest -v | pytest | 0.07 MB | 863 | 771 | 771 | 771 | no | 7.7-9.6 |
+| pytest -v, colour | pytest | 0.08 MB | 863 | 771 | 771 | 771 | no | 8.7-10.6 |
+| pytest -v -rA --durations=0 | pytest | 2.01 MB | 23,046 | 771 | 771 | 771 | no | 94-134 |
+| pytest --junitxml | junit | 0.07 MB | 1 | 771 | 771 | - | no | 1.4-1.7 |
+| python -m unittest -v | unittest | 0.08 MB | 1,231 | 935 | 935 | 935 | no | 6.3-9.3 |
 
 The `-rA` log is large because the suite runs 21,203 subtests and `-rA` prints a row for
 each passing one; testlogs counts them in a note and gives them no records. Its size
 and line count change a little from run to run, because `--durations=0` leaves out
 timings under 0.005 s and which rows fall under that depends on timing; the record
-counts do not change. Two runs of `real_data.sh` here gave 23,047 lines both times, at
-2,014,406 and 2,014,399 bytes. The JUnit file is one line with no final newline.
+counts do not change. Three runs of `real_data.sh` here gave 23,047, 23,047 and 23,046
+lines, at 2,014,406, 2,014,399 and 2,014,332 bytes; the table is from the third.  Parse times move with machine load (an
+earlier table here gave 200-228 ms for the `-rA` log). Timed back to back on the same
+`-rA` log, twice, the code at `aaf35e9` took 146 and 148 ms and the current code 96 ms
+both times (medians of 9 calls): the PASSES section, most of that log, is no longer
+matched against result patterns line by line. The JUnit file is one line with no final newline.
 
 Cross-checks, with `diff_runs(..., key=normalise_id)` against the plain `-v` log: the
 colour, `-rA` and JUnit logs give 0 fixed, 0 broken, 0 appeared, 0 vanished, 0 other.
@@ -259,14 +328,16 @@ the diff is empty.
 Release diff: `v10.5.0` gives 664 records (663 passed, 1 skipped); against the current
 run, 0 fixed, 0 broken, 119 appeared, 12 vanished, 0 other.
 
-Truncation: each of the five logs cut at 50 random byte offsets (seed 0): 50 of 50 cut
+Truncation (same `real_data.py` run): each of the five logs cut at 50 random byte offsets (seed 0): 50 of 50 cut
 copies of every log are reported incomplete or are rejected as unrecognisable; none is
 read as a complete, smaller run. The test suite also cuts 14 fixture logs at every line
 before their closing line (565 cuts) and checks each is incomplete
 (`tests/test_truncation.py`).
 
-Tests: `uv run pytest -q --cov=testlogs` gives 135 passed and 97 % line coverage
-(1102 statements, 32 missed) in 0.32 s; the same suite passes on Python 3.10.20.
+Tests: `uv run pytest -q --cov=testlogs` gives 176 passed and 97 % line coverage
+(1308 statements, 33 missed), in under a second on the machine used here; the same suite
+passes on Python 3.10.20
+(`uv run --isolated --python 3.10 --with pytest --with-editable . python -m pytest -q`).
 
 ## Limitations
 
@@ -297,7 +368,16 @@ Tests: `uv run pytest -q --cov=testlogs` gives 135 passed and 97 % line coverage
   record says `passed` where the `-v` log says `xpass`.
 - A pytest summary row with no matching verbose line (a `-q -rA` log) has its id cut at
   the first ` - ` outside brackets, so a parameter id like `x] - y`, with a stray `]`
-  before the ` - `, is still cut short there.
+  before the ` - `, is still cut short there; an id with a stray `[` (`test_p[c[d]`)
+  never closes its bracket, so the reason stays in the id (`test_p[c[d] - known`).
+- jest's default reporter names a failure only by its `●` bullet, which joins levels
+  with `›`; a test whose own name holds `›` is then split into levels. With
+  `--verbose` the bullet is matched to the tree and the name stays whole.
+- node:test counts a test that has subtests (`t.test(...)`) as a test, but its spec
+  and TAP lines look like a describe block's, so it gets no record; the summary-count
+  note shows the gap.
+- mocha's tree is read by indentation: printed output at a test's own indent with
+  deeper lines after it could still be taken for a describe title.
 - A TAP subtest block without its own `1..N` plan is checked only through its parent:
   a missing child line goes unnoticed if the parent's result line is present.
 - unittest `file` is the dotted module, not a path; for a doctest it is the module the
