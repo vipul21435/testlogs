@@ -25,4 +25,7 @@ ROOT="$(pwd)"
 for f in fixtures/*.log fixtures/*.xml; do
   sed -i.bak -e "s#$ROOT#/work#g" -e 's/hostname="[^"]*"/hostname="localhost"/g' "$f" && rm "$f.bak"
 done
+# unittest -v on its own sample (kept out of pytest_sample so the pytest logs stay the same).
+uv run --no-sync python -m unittest -v fixtures.unittest_sample.test_unit > fixtures/unittest-v.log 2>&1
+sed -i.bak -e "s#$ROOT#/work#g" fixtures/unittest-v.log && rm fixtures/unittest-v.log.bak
 echo "fixtures regenerated"

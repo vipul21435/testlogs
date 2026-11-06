@@ -1,0 +1,31 @@
+test_add (fixtures.unittest_sample.test_unit.Maths.test_add) ... ok
+test_error (fixtures.unittest_sample.test_unit.Maths.test_error) ... ERROR
+test_expected_failure (fixtures.unittest_sample.test_unit.Maths.test_expected_failure) ... expected failure
+test_fails (fixtures.unittest_sample.test_unit.Maths.test_fails) ... FAIL
+test_skipped (fixtures.unittest_sample.test_unit.Maths.test_skipped) ... skipped 'not now'
+test_unexpected_success (fixtures.unittest_sample.test_unit.Maths.test_unexpected_success) ... unexpected success
+test_with_docstring (fixtures.unittest_sample.test_unit.Maths.test_with_docstring)
+Adds two floats. ... ok
+
+======================================================================
+ERROR: test_error (fixtures.unittest_sample.test_unit.Maths.test_error)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/fixtures/unittest_sample/test_unit.py", line 18, in test_error
+    raise RuntimeError("boom")
+RuntimeError: boom
+
+======================================================================
+FAIL: test_fails (fixtures.unittest_sample.test_unit.Maths.test_fails)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/fixtures/unittest_sample/test_unit.py", line 15, in test_fails
+    self.assertEqual(2 + 2, 5)
+AssertionError: 4 != 5
+
+======================================================================
+UNEXPECTED SUCCESS: test_unexpected_success (fixtures.unittest_sample.test_unit.Maths.test_unexpected_success)
+----------------------------------------------------------------------
+Ran 7 tests in 0.000s
+
+FAILED (failures=1, errors=1, skipped=1, expected failures=1, unexpected successes=1)
