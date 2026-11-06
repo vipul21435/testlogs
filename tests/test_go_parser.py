@@ -54,3 +54,18 @@ def test_go_diff_verbose_against_json():
     d = diff_runs(parse((FIX / "go-v.log").read_text()), parse((FIX / "go-json.log").read_text()))
     assert d.fixed == [] and d.broken == []
     assert f"{PARSER}::TestDuplicate" in d.vanished
+
+
+def test_go_parallel_pause_cont_lines_are_ignored():
+    text = (
+        "=== RUN   TestA\n=== PAUSE TestA\n=== RUN   TestB\n=== PAUSE TestB\n"
+        "=== CONT  TestA\n=== CONT  TestB\n=== NAME  TestB\n    b_test.go:9: slow\n"
+        "--- PASS: TestB (0.20s)\n--- FAIL: TestA (0.30s)\nFAIL\n"
+        "FAIL\texample.com/p\t0.501s\n"
+    )
+    run = parse(text)
+    assert run.format == "go" and not run.incomplete
+    assert [(r.id, r.status) for r in run.results] == [
+        ("example.com/p::TestB", Status.PASSED),
+        ("example.com/p::TestA", Status.FAILED),
+    ]
