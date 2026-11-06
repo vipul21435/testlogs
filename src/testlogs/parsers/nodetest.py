@@ -35,6 +35,11 @@ def parse(lines: list[str]) -> Run:
             complete = True
             run.summary_total = int(m.group("n"))
             break
+        m = _SUITE.match(line) or _LEAF.match(line)
+        # The tree indents two spaces per level; a deeper line has no parent in it
+        # and is a test's own output.
+        if m and len(m.group("indent")) > (stack[-1][0] + 2 if stack else 0):
+            continue
         m = _SUITE.match(line)
         if m:
             indent = len(m.group("indent"))

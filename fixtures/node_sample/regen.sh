@@ -42,6 +42,9 @@ $N --test-reporter=tap nodetest/maths.test.mjs nodetest/strings.test.mjs > $OUT/
 # Names holding "#" and "\", which TAP 14 escapes as "\#" and "\\".
 $N --test-reporter=tap nodetest/escapes.test.mjs > $OUT/nodetest-tap-escapes.log 2>&1
 $N --test-reporter=spec nodetest/escapes.test.mjs > $OUT/nodetest-spec-escapes.log 2>&1
+# A test that prints a spec-shaped line, and a test with subtests.
+$N --test-reporter=spec nodetest/edge.test.mjs > $OUT/nodetest-spec-edge.log 2>&1
+$N --test-reporter=tap nodetest/edge.test.mjs > $OUT/nodetest-tap-edge.log 2>&1
 # A colour run to exercise ANSI stripping on a node reporter.
 FORCE_COLOR=1 $J --verbose --colors > $OUT/jest-verbose-color.log 2>&1
 # Replace the checkout path and timing noise so the fixtures are portable.

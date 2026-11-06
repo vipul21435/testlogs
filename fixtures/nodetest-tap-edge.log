@@ -1,0 +1,75 @@
+TAP version 13
+#   ✔ printed result line (1ms)
+# Subtest: outer
+    # Subtest: prints
+    ok 1 - prints
+      ---
+      duration_ms: 0.920625
+      type: 'test'
+      ...
+    # Subtest: fails
+    not ok 2 - fails
+      ---
+      duration_ms: 0.812875
+      type: 'test'
+      location: '/work/node_sample/nodetest/edge.test.mjs:10:3'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly equal:
+        
+        1 !== 2
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected: 2
+      actual: 1
+      operator: 'strictEqual'
+      stack: |-
+        TestContext.<anonymous> (file:///work/node_sample/nodetest/edge.test.mjs:11:12)
+        Test.runInAsyncScope (node:async_hooks:226:14)
+        Test.run (node:internal/test_runner/test:1201:25)
+        Suite.processPendingSubtests (node:internal/test_runner/test:831:18)
+        Test.postRun (node:internal/test_runner/test:1330:19)
+        Test.run (node:internal/test_runner/test:1258:12)
+        async Promise.all (index 0)
+        async Suite.run (node:internal/test_runner/test:1619:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3)
+      ...
+    1..2
+not ok 1 - outer
+  ---
+  duration_ms: 2.467583
+  type: 'suite'
+  location: '/work/node_sample/nodetest/edge.test.mjs:6:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: parent with subtests
+    # Subtest: sub a
+    ok 1 - sub a
+      ---
+      duration_ms: 0.072834
+      type: 'test'
+      ...
+    # Subtest: sub b
+    ok 2 - sub b
+      ---
+      duration_ms: 0.059
+      type: 'test'
+      ...
+    1..2
+ok 2 - parent with subtests
+  ---
+  duration_ms: 0.394708
+  type: 'test'
+  ...
+1..2
+# tests 5
+# suites 1
+# pass 4
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 104.192375

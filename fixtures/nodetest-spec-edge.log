@@ -1,0 +1,42 @@
+  ✔ printed result line (1ms)
+▶ outer
+  ✔ prints (0.97025ms)
+  ✖ fails (0.80325ms)
+✖ outer (2.775125ms)
+▶ parent with subtests
+  ✔ sub a (0.073625ms)
+  ✔ sub b (0.055084ms)
+✔ parent with subtests (0.385083ms)
+ℹ tests 5
+ℹ suites 1
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 103.852625
+
+✖ failing tests:
+
+test at nodetest/edge.test.mjs:10:3
+✖ fails (0.80325ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (file:///work/node_sample/nodetest/edge.test.mjs:11:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1201:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:831:18)
+      at Test.postRun (node:internal/test_runner/test:1330:19)
+      at Test.run (node:internal/test_runner/test:1258:12)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1619:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

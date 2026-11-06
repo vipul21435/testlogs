@@ -172,3 +172,16 @@ def test_jest_suite_that_fails_to_run_is_an_error_named_by_its_file():
     assert ("jest-edge/broken.test.js", Status.ERROR) in [(r.id, r.status) for r in run.results]
     report = parse((FIX / "jest-report-edge.json").read_text(encoding="utf-8"))
     assert [r.status for r in report.results if r.id.endswith("broken.test.js")] == [Status.ERROR]
+
+
+def test_nodetest_printed_result_lines_outside_the_tree_are_not_tests():
+    run = parse((FIX / "nodetest-spec-edge.log").read_text(encoding="utf-8"))
+    assert [r.id for r in run.results] == [
+        "outer > prints",
+        "outer > fails",
+        "parent with subtests > sub a",
+        "parent with subtests > sub b",
+    ]
+    # node counts the parent of subtests as a test; its spec line looks like a suite's.
+    assert run.summary_total == 5
+    assert any("counts 5 tests; 4 records" in n for n in run.notes)
