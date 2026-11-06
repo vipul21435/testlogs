@@ -1,0 +1,31 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.2.0, pluggy-1.7.0 -- /work/.venv/bin/python3
+rootdir: /work
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 4 items
+
+fixtures/printfinal_sample/test_print_final.py::test_prints_a_final_line 
+========================= 1 failed, 1 passed in 0.03s ==========================
+PASSED
+fixtures/printfinal_sample/test_print_final.py::test_after PASSED
+fixtures/printfinal_sample/test_print_final.py::test_warns PASSED
+fixtures/printfinal_sample/test_print_final.py::test_fails FAILED
+
+=================================== FAILURES ===================================
+__________________________________ test_fails __________________________________
+
+    def test_fails():
+>       assert 1 + 1 == 3
+E       assert (1 + 1) == 3
+
+fixtures/printfinal_sample/test_print_final.py:20: AssertionError
+=============================== warnings summary ===============================
+fixtures/printfinal_sample/test_print_final.py::test_warns
+  /work/fixtures/printfinal_sample/test_print_final.py:16: UserWarning: careful
+    warnings.warn("careful", UserWarning, stacklevel=1)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED fixtures/printfinal_sample/test_print_final.py::test_fails - assert (1...
+==================== 1 failed, 3 passed, 1 warning in 0.03s ====================

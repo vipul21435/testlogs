@@ -170,3 +170,32 @@ def test_inner_session_glued_to_the_outer_id_under_s_adds_no_records():
     ]
     assert run.summary_total == 2
     assert run.notes == []
+
+
+def test_final_line_printed_by_a_test_under_s_is_not_the_end():
+    run = _run("pytest-v-s-printfinal.log")
+    assert not run.incomplete
+    assert [(r.id.rsplit("::", 1)[1], r.status.value) for r in run.results] == [
+        ("test_prints_a_final_line", "passed"),
+        ("test_after", "passed"),
+        ("test_warns", "passed"),
+        ("test_fails", "failed"),
+    ]
+    assert run.summary_total == 4
+    # Cut right after the second test: the printed final line came before it.
+    lines = (FIX / "pytest-v-s-printfinal.log").read_text().splitlines()
+    cut = _run_text("\n".join(lines[:11]))
+    assert cut.incomplete
+    assert "no final summary line: the log is truncated or the run was interrupted" in cut.notes
+
+
+def test_results_after_a_final_shaped_line_reopen_the_run():
+    text = (
+        "============================= test session starts ==============================\n"
+        "a.py::test_x PASSED [ 50%]\n"
+        "========================= 1 failed, 1 passed in 0.03s ==========================\n"
+        "a.py::test_y PASSED [100%]\n"
+    )
+    run = _run_text(text)
+    assert run.incomplete
+    assert run.summary_total is None

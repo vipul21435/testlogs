@@ -78,6 +78,8 @@ head -n "$n" fixtures/pytest-v-pytester.log > fixtures/pytest-v-pytester-cut.log
 
 # The same outer test under -s: the inner session's banner is glued to the outer id.
 $P -v -s -p pytester fixtures/pytester_sample > fixtures/pytest-v-s-pytester.log 2>&1
+# Under -s a test prints a line shaped like the final line, with no session banner.
+$P -v -s fixtures/printfinal_sample > fixtures/pytest-v-s-printfinal.log 2>&1
 
 # Replace the machine's checkout path and host name so fixtures are portable.
 for f in fixtures/*.log fixtures/*.xml; do

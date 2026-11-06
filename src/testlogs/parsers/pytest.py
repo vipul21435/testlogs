@@ -7,9 +7,12 @@ summary wins, because a test's verbose line can be split by captured output.
 A parameter id may contain `` - `` itself, so a summary row's id is the longest
 id already seen on a verbose line, or else ends at the first `` - `` outside brackets.
 The final ``==== 3 passed in 0.02s ====`` line marks a complete log; without
-it the run is reported incomplete. pytest prints the final line even after a run
-stops early, so a ``!!! KeyboardInterrupt !!!`` or ``!!! Interrupted: ... !!!``
-banner also makes the run incomplete, and the test that was running is named.
+it the run is reported incomplete. A final-shaped line printed while a test has
+no status yet (``-s``) is that test's output, and a result after a final-shaped
+line makes the run incomplete again until the next one. pytest prints the final
+line even after a run stops early, so a ``!!! KeyboardInterrupt !!!`` or
+``!!! Interrupted: ... !!!`` banner also makes the run incomplete, and the test
+that was running is named.
 Lines inside the FAILURES, ERRORS and PASSES sections are captured output, and a
 whole pytest session printed by a test (pytester) is skipped from its
 ``test session starts`` line to its own final line. Under ``-s`` that banner is
@@ -74,6 +77,7 @@ _FINAL_COUNT = re.compile(
 )
 _SUMMARY_HEADER = re.compile(r"^=+ short test summary info =+$")
 _SESSION_START = re.compile(r"^=+ test session starts =+$")
+_WARNINGS = re.compile(r"^=+ warnings summary =+$")
 # Sections that hold tracebacks and captured output, which can contain lines shaped
 # like pytest's own (a test that runs pytest itself, or prints such lines).
 # The warnings summary is pytest's own text, so it ends a section, like the
@@ -216,6 +220,14 @@ def parse(lines: list[str]) -> Run:
     depth = 0  # pytest sessions nested in captured output
     in_section = False
     captured = False  # inside a section, within a test's captured output
+    in_warnings = False  # the warnings summary names tests on lines of their own
+
+    def result_seen() -> None:
+        # A result after a final-shaped line: that line was output, not the end.
+        nonlocal complete, final_total
+        complete = False
+        final_total = None
+
     for idx, raw in enumerate(lines):
         line = raw.rstrip()
         if not line:
@@ -259,6 +271,7 @@ def parse(lines: list[str]) -> Run:
             interrupted.append(m.group("what"))
             if pending is not None and unfinished is None:
                 unfinished = pending
+            pending = None
             continue
         m = _COLLECTED.match(line)
         if m and collected is None:
@@ -268,6 +281,8 @@ def parse(lines: list[str]) -> Run:
             in_summary = True
             continue
         if _FINAL.match(line) or _FINAL_QUIET.match(line):
+            if pending is not None:
+                continue  # -s: printed by the test that is running
             complete = True
             in_summary = False
             for sc in _SUBTEST_COUNT.finditer(line):
@@ -285,6 +300,7 @@ def parse(lines: list[str]) -> Run:
         if in_summary:
             m = _SUBTEST.match(line)
             if m:
+                result_seen()
                 if m.group("status") == "FAILED":
                     tid = _summary_id(line[m.start("id") :], known)
                     subfailed[tid] = subfailed.get(tid, 0) + 1
@@ -299,11 +315,13 @@ def parse(lines: list[str]) -> Run:
                 if "::" in tid:
                     rest = line[m.start("id") :]
                     tid = _summary_id(rest, known)
+                result_seen()
                 summary.append(TestResult(tid, _STATUS_WORDS[m.group("status")], _file_of(tid)))
             continue
         m = _RERUN.match(line)
         if m:
             reruns[m.group("id")] = reruns.get(m.group("id"), 0) + 1
+            result_seen()
             pending = None
             continue
         m = _XDIST.match(line) or _VERBOSE.match(line)
@@ -317,16 +335,21 @@ def parse(lines: list[str]) -> Run:
                     tid = whole
             verbose.append(TestResult(tid, _STATUS_WORDS[m.group("status")], _file_of(tid)))
             known.add(tid)
+            result_seen()
             pending = None
             continue
         m = _BARE_STATUS.match(line)
         if m and pending is not None:
             verbose.append(TestResult(pending, _STATUS_WORDS[m.group("status")], _file_of(pending)))
             known.add(pending)
+            result_seen()
             pending = None
             continue
         if line.startswith("=") or line.startswith("_"):
+            in_warnings = bool(_WARNINGS.match(line))
             pending = None
+            continue
+        if in_warnings:
             continue
         tid = _leading_node_id(line)
         if tid is not None:
