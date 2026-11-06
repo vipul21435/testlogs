@@ -6,7 +6,9 @@ set -u
 cd "$(dirname "$0")"
 OUT=..
 export NO_COLOR=1 CI=1 FORCE_COLOR=0
-J="npx jest --config jest.config.json"
+# --runInBand runs the test files one at a time, so the log order does not depend
+# on which worker finishes first.
+J="npx jest --config jest.config.json --runInBand"
 $J > $OUT/jest-default.log 2>&1
 $J --verbose > $OUT/jest-verbose.log 2>&1
 $J --json --outputFile=$OUT/jest-report.json > /dev/null 2>&1
@@ -24,7 +26,7 @@ $N --test-reporter=tap nodetest/maths.test.mjs nodetest/strings.test.mjs > $OUT/
 $N --test-reporter=tap nodetest/escapes.test.mjs > $OUT/nodetest-tap-escapes.log 2>&1
 $N --test-reporter=spec nodetest/escapes.test.mjs > $OUT/nodetest-spec-escapes.log 2>&1
 # A colour run to exercise ANSI stripping on a node reporter.
-FORCE_COLOR=1 npx jest --config jest.config.json --verbose --colors > $OUT/jest-verbose-color.log 2>&1
+FORCE_COLOR=1 $J --verbose --colors > $OUT/jest-verbose-color.log 2>&1
 # Replace the checkout path and timing noise so the fixtures are portable.
 ROOT="$(cd .. && pwd)"
 for f in $OUT/jest-*.log $OUT/jest-*.json $OUT/vitest-*.log $OUT/vitest-*.json $OUT/mocha-*.log $OUT/nodetest-*.log; do

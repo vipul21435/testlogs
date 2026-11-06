@@ -43,7 +43,10 @@ def test_jest_verbose_nested_describe_and_duplicates():
     assert ids.count("jest/maths.test.js::maths > duplicate name") == 2
     by = {r.id: r for r in run.results}
     assert by["jest/maths.test.js::maths > add > fails on purpose"].status is Status.FAILED
-    assert by["jest/maths.test.js::maths > add > adds two numbers"].duration == 0.001
+    # Durations change on every run, so only their shape is checked; jest prints
+    # none for skipped and todo tests.
+    assert all(r.duration is None or r.duration >= 0 for r in run.results)
+    assert any(r.duration and r.duration > 0 for r in run.results)
     assert by["jest/strings.test.js::trims whitespace"].file == "jest/strings.test.js"
 
 
