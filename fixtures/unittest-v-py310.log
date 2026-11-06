@@ -1,0 +1,25 @@
+ERROR
+test_sub (fixtures.unittest_sample.test_py310.Sub) ... test_xf (fixtures.unittest_sample.test_py310.Sub) ... expected failure
+test_zz_prints (fixtures.unittest_sample.test_py310.Sub) ... ok
+
+======================================================================
+ERROR: setUpClass (fixtures.unittest_sample.test_py310.Broken)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/fixtures/unittest_sample/test_py310.py", line 27, in setUpClass
+    raise RuntimeError("no fixture")
+RuntimeError: no fixture
+
+======================================================================
+FAIL: test_sub (fixtures.unittest_sample.test_py310.Sub) (i=1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/work/fixtures/unittest_sample/test_py310.py", line 14, in test_sub
+    self.assertNotEqual(i, 1)
+AssertionError: 1 == 1
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.001s
+
+FAILED (failures=1, errors=1, expected failures=1)
+test_fake (pkg.test_u.A.test_fake) ... ok

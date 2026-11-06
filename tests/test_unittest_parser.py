@@ -67,3 +67,39 @@ def test_output_printed_after_the_dots_keeps_every_test():
         "test_two_lines_then_skip": "skipped",
     }
     assert run.summary_total == len(run.results)
+
+
+PY = "fixtures.unittest_sample.test_py310."
+
+
+def test_python310_failing_subtest_keeps_the_next_test():
+    # 3.10 prints no result for a test whose subTest fails, so the next test's head
+    # follows on the same line: "test_sub (q) ... test_xf (q) ... expected failure".
+    for name in ("unittest-v-py310.log", "unittest-v-py312.log"):
+        run = parse((FIX / name).read_text())
+        assert run.format == "unittest" and not run.incomplete
+        s = {r.id: r.status for r in run.results}
+        assert s[PY + "Sub.test_sub"] is Status.FAILED, name
+        assert s[PY + "Sub.test_xf"] is Status.XFAIL, name
+        assert s[PY + "Sub.test_zz_prints"] is Status.PASSED, name
+        ids = [r.id for r in run.results]
+        assert ids.index(PY + "Sub.test_sub") < ids.index(PY + "Sub.test_xf")
+
+
+def test_python310_subtest_failure_of_the_last_test_is_read_from_its_header():
+    text = (
+        "test_a (pkg.m.C) ... ok\n"
+        "test_sub (pkg.m.C) ... \n"
+        "======================================================================\n"
+        "FAIL: test_sub (pkg.m.C) (i=1)\n"
+        "----------------------------------------------------------------------\n"
+        "AssertionError: 1 == 1\n\n"
+        "----------------------------------------------------------------------\n"
+        "Ran 2 tests in 0.001s\n\nFAILED (failures=1)\n"
+    )
+    run = parse(text, fmt="unittest")
+    assert [(r.id, r.status) for r in run.results] == [
+        ("pkg.m.C.test_a", Status.PASSED),
+        ("pkg.m.C.test_sub", Status.FAILED),
+    ]
+    assert not [n for n in run.notes if "summary counts" in n]

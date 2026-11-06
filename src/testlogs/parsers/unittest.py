@@ -7,7 +7,10 @@ when the ``Ran N tests in Xs`` line is present.
 A test whose ``subTest`` cases fail prints ``test_x (qual) ... `` with no result,
 then one indented ``test_x (qual) (i=1) ... FAIL`` line per failing case and no
 line for the parent. The parent is recorded once, as failed (or error), so that
-it lines up with the pytest and JUnit records of the same run.
+it lines up with the pytest and JUnit records of the same run. Python 3.10 prints
+nothing at all for a failing subTest, so the next test's head follows on the same
+line (``test_x (qual) ... test_y (qual) ... ok``); the line is split into two heads
+and ``test_x`` takes its status from its ``FAIL: test_x (qual) (i=1)`` header.
 
 With unbuffered stdout a test's own output follows the `` ... `` and the result
 comes after it, on the same line (``... xok``) or a later one. A result word that
@@ -39,6 +42,10 @@ _SUB = re.compile(
     r"^\s+(?P<name>\S+) \((?P<qual>[\w.]+)\) \(.*\) \.\.\. (?P<result>FAIL|ERROR|skipped.*)$"
 )
 _TAIL = re.compile(r"^.*\.\.\. " + _RESULT_RE + r"\s*$")
+# The header of a failure's details: "FAIL: test_x (qual)", with "(i=1)" for a subTest.
+_DETAIL = re.compile(
+    r"^(?P<kind>FAIL|ERROR): (?P<name>\S+) \((?P<qual>[\w.]+)\)(?P<params> \(.*\))?$"
+)
 _RAN = re.compile(r"^Ran (?P<n>\d+) tests? in [\d.]+s$")
 
 
@@ -72,12 +79,19 @@ def parse(lines: list[str]) -> Run:
     pending: tuple[str, str] | None = None
     guess: Status | None = None  # a result word that ended the pending test's output
     sub_failed: dict[str, Status] = {}
+    # Tests that printed no result, with the place their record belongs; a FAIL or
+    # ERROR details header later gives them a status (Python 3.10 subTest failures).
+    unresolved: dict[str, tuple[int, str]] = {}
+    from_header: dict[str, Status] = {}
     complete = False
 
     def settle(status: Status | None) -> None:
         nonlocal pending, guess
-        if pending is not None and status is not None:
-            run.results.append(TestResult(pending[0], status, pending[1]))
+        if pending is not None:
+            if status is not None:
+                run.results.append(TestResult(pending[0], status, pending[1]))
+            else:
+                unresolved.setdefault(pending[0], (len(run.results), pending[1]))
         pending, guess = None, None
 
     for raw in lines:
@@ -97,11 +111,25 @@ def parse(lines: list[str]) -> Run:
                 run.results.append(TestResult(tid, status, file))
             pending, guess = None, None
             continue
+        m = _DETAIL.match(line)
+        if m:
+            tid, _ = _ident(m.group("name"), m.group("qual"))
+            kind = Status.FAILED if m.group("kind") == "FAIL" else Status.ERROR
+            if from_header.get(tid) is not Status.FAILED:
+                from_header[tid] = kind
         m = _HEAD.match(line)
         if m:
             settle(guess)
-            tid, file = _ident(m.group("name"), m.group("qual"))
-            rest = (m.group("rest") or "").strip()
+            while True:
+                tid, file = _ident(m.group("name"), m.group("qual"))
+                rest = (m.group("rest") or "").strip()
+                nested = _HEAD.match(rest)
+                if nested is None:
+                    break
+                # Python 3.10: this test printed no result before the next head.
+                pending = (tid, file)
+                settle(None)
+                m = nested
             exact = _EXACT.match(rest)
             if exact:
                 run.results.append(TestResult(tid, _status(exact.group("result")), file))
@@ -123,6 +151,14 @@ def parse(lines: list[str]) -> Run:
             ends = _ENDS.search(line)
             guess = _status(ends.group("result")) if ends else None
     # A guess left open at the end of a cut log is dropped, not recorded.
+    recorded = {r.id for r in run.results}
+    late = [
+        (at, TestResult(tid, from_header[tid], file))
+        for tid, (at, file) in unresolved.items()
+        if tid in from_header and tid not in recorded
+    ]
+    for at, result in reversed(sorted(late, key=lambda x: x[0])):
+        run.results.insert(at, result)
     if sub_failed:
         n = len(sub_failed)
         run.notes.append(f"{plural(n, 'test')} with failing subtests, recorded as failed")

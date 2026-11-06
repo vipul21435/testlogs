@@ -42,6 +42,14 @@ $U fixtures.unittest_sample.test_unit > fixtures/unittest-v.log 2>&1
 # output lands after " ... " and the result follows it on the same or a later line.
 PYTHONUNBUFFERED=1 $U fixtures.unittest_sample.test_print > fixtures/unittest-v-print.log 2>&1
 
+# Python 3.10 prints no result for a test whose subTest fails, so the next test's head
+# follows on the same line; stdout redirected to a file is block-buffered, so what the
+# tests print lands after the run summary. The same suite on 3.12 for comparison.
+uv run --no-project --python 3.10 python -m unittest -v fixtures.unittest_sample.test_py310 \
+  > fixtures/unittest-v-py310.log 2>&1
+uv run --no-project --python 3.12 python -m unittest -v fixtures.unittest_sample.test_py310 \
+  > fixtures/unittest-v-py312.log 2>&1
+
 # subTest cases, under pytest (which reports subtests itself from version 9) and unittest.
 T=fixtures/subtests_sample/test_subtests.py
 $P -v $T > fixtures/subtests-pytest-v.log 2>&1
