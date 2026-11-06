@@ -168,3 +168,86 @@ def test_summary_only_rows_split_reason_outside_brackets():
         "test_p[c]d]": Status.PASSED,
         "test_q[x - y]": Status.FAILED,
     }
+
+
+IDS = "fixtures/ids_sample/test_ids.py::"
+
+
+def _ids(name):
+    run = parse((FIX / name).read_text(encoding="utf-8"), fmt="pytest")
+    return run, [(r.id[len(IDS) :], r.status.value) for r in run.results]
+
+
+def test_summary_row_keeps_an_id_with_a_stray_bracket_seen_on_a_verbose_line():
+    # "FAILED ...::test_r[x] - y] - AssertionError: ...": counting brackets would cut
+    # the id after "test_r[x]"; the verbose line has already shown the whole id.
+    run, got = _ids("pytest-v-rA-ids.log")
+    assert got == [
+        ("test_r[x] - y]", "failed"),
+        ("test_r[ok]", "passed"),
+        ("test_param_fail[1]", "passed"),
+        ("test_param_fail[2]", "failed"),
+        ("test_out[a b]", "passed"),
+        ("test_slow_setup", "passed"),
+    ]
+    assert not run.incomplete and run.summary_total == 6 and run.notes == []
+
+
+def test_duration_is_the_slowest_phase_from_durations_rows():
+    text = (FIX / "pytest-v-rA-ids.log").read_text(encoding="utf-8")
+    rows = [
+        float(ln.split("s", 1)[0])
+        for ln in text.splitlines()
+        if ln.endswith("::test_slow_setup") and ln[:1].isdigit()
+    ]
+    assert len(rows) == 2 and rows[0] != rows[1]
+    run = parse(text, fmt="pytest")
+    assert {r.id: r.duration for r in run.results}[IDS + "test_slow_setup"] == max(rows)
+
+
+def test_quiet_summary_rows_end_ids_at_the_reason_outside_brackets():
+    # -q prints no verbose lines, so ids come from bracket counting alone; an id
+    # with a stray "]" before " - " is cut there (documented in Limitations).
+    run, got = _ids("pytest-q-rA-ids.log")
+    assert sorted(got) == [
+        ("test_out[a b]", "passed"),
+        ("test_param_fail[1]", "passed"),
+        ("test_param_fail[2]", "failed"),
+        ("test_r[ok]", "passed"),
+        ("test_r[x]", "failed"),
+        ("test_slow_setup", "passed"),
+    ]
+    assert not run.incomplete
+
+
+def test_rN_log_ending_in_tracebacks_is_complete():
+    # -rN: no short summary follows the FAILURES section, so the final line closes it.
+    run, got = _ids("pytest-v-rN-ids.log")
+    assert not run.incomplete
+    assert run.notes == []
+    assert len(got) == 6 and ("test_r[x] - y]", "failed") in got
+
+
+def test_s_output_after_a_spaced_id_keeps_the_id_whole():
+    run, got = _ids("pytest-v-s-ids.log")
+    assert ("test_out[a b]", "passed") in got
+    assert not run.incomplete and len(got) == 6
+
+
+def test_rerun_note_counts_every_rerun():
+    run = parse((FIX / "pytest-rerun.log").read_text(encoding="utf-8"))
+    assert run.notes[0] == (
+        "2 tests were rerun (3 reruns); 1 passed only on a rerun: "
+        "fixtures/rerun_sample/test_rerun.py::test_flaky_then_passes"
+    )
+
+
+def test_cut_log_names_the_test_that_was_running():
+    lines = (FIX / "pytest-v-s-ids.log").read_text(encoding="utf-8").splitlines()
+    k = next(i for i, ln in enumerate(lines) if ln.endswith("hello world"))
+    run = parse("\n".join(lines[: k + 1]), fmt="pytest")
+    assert run.incomplete
+    assert run.notes == [
+        "no final summary line: the log is truncated or the run was interrupted",
+        f"{IDS}test_out[a b] started and has no status",
+    ]

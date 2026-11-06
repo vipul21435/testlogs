@@ -1,0 +1,37 @@
+F..F..                                                                                                                                                   [100%]
+=========================================================================== FAILURES ===========================================================================
+________________________________________________________________________ test_r[x] - y] ________________________________________________________________________
+
+v = 'x] - y'
+
+    @pytest.mark.parametrize("v", ["x] - y", "ok"])
+    def test_r(v):
+>       assert v == "ok"
+E       AssertionError: assert 'x] - y' == 'ok'
+E         
+E         - ok
+E         + x] - y
+
+fixtures/ids_sample/test_ids.py:10: AssertionError
+______________________________________________________________________ test_param_fail[2] ______________________________________________________________________
+
+n = 2
+
+    @pytest.mark.parametrize("n", [1, 2])
+    def test_param_fail(n):
+>       assert n != 2
+E       assert 2 != 2
+
+fixtures/ids_sample/test_ids.py:15: AssertionError
+============================================================================ PASSES ============================================================================
+________________________________________________________________________ test_out[a b] _________________________________________________________________________
+--------------------------------------------------------------------- Captured stdout call ---------------------------------------------------------------------
+hello world
+=================================================================== short test summary info ====================================================================
+PASSED fixtures/ids_sample/test_ids.py::test_r[ok]
+PASSED fixtures/ids_sample/test_ids.py::test_param_fail[1]
+PASSED fixtures/ids_sample/test_ids.py::test_out[a b]
+PASSED fixtures/ids_sample/test_ids.py::test_slow_setup
+FAILED fixtures/ids_sample/test_ids.py::test_r[x] - y] - AssertionError: assert 'x] - y' == 'ok'
+FAILED fixtures/ids_sample/test_ids.py::test_param_fail[2] - assert 2 != 2
+2 failed, 4 passed in 0.13s

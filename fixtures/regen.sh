@@ -80,6 +80,14 @@ head -n "$n" fixtures/pytest-v-pytester.log > fixtures/pytest-v-pytester-cut.log
 $P -v -s -p pytester fixtures/pytester_sample > fixtures/pytest-v-s-pytester.log 2>&1
 # Under -s a test prints a line shaped like the final line, with no session banner.
 $P -v -s fixtures/printfinal_sample > fixtures/pytest-v-s-printfinal.log 2>&1
+# A parameter id with a stray "]" before " - ", which only a verbose line can settle;
+# -q -rA (no verbose lines), -rN (no summary after the tracebacks), -s (output after
+# a spaced id) and --durations=0 with a setup slower than the call.
+I=fixtures/ids_sample
+COLUMNS=160 $P -v -rA --durations=0 $I > fixtures/pytest-v-rA-ids.log 2>&1
+COLUMNS=160 $P -q -rA $I > fixtures/pytest-q-rA-ids.log 2>&1
+COLUMNS=160 $P -v -rN $I > fixtures/pytest-v-rN-ids.log 2>&1
+COLUMNS=160 $P -v -s $I > fixtures/pytest-v-s-ids.log 2>&1
 
 # Replace the machine's checkout path and host name so fixtures are portable.
 for f in fixtures/*.log fixtures/*.xml; do

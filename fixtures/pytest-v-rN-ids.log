@@ -1,0 +1,39 @@
+===================================================================== test session starts ======================================================================
+platform darwin -- Python 3.12.13, pytest-9.2.0, pluggy-1.7.0 -- /work/.venv/bin/python3
+rootdir: /work
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 6 items
+
+fixtures/ids_sample/test_ids.py::test_r[x] - y] FAILED                                                                                                   [ 16%]
+fixtures/ids_sample/test_ids.py::test_r[ok] PASSED                                                                                                       [ 33%]
+fixtures/ids_sample/test_ids.py::test_param_fail[1] PASSED                                                                                               [ 50%]
+fixtures/ids_sample/test_ids.py::test_param_fail[2] FAILED                                                                                               [ 66%]
+fixtures/ids_sample/test_ids.py::test_out[a b] PASSED                                                                                                    [ 83%]
+fixtures/ids_sample/test_ids.py::test_slow_setup PASSED                                                                                                  [100%]
+
+=========================================================================== FAILURES ===========================================================================
+________________________________________________________________________ test_r[x] - y] ________________________________________________________________________
+
+v = 'x] - y'
+
+    @pytest.mark.parametrize("v", ["x] - y", "ok"])
+    def test_r(v):
+>       assert v == "ok"
+E       AssertionError: assert 'x] - y' == 'ok'
+E         
+E         - ok
+E         + x] - y
+
+fixtures/ids_sample/test_ids.py:10: AssertionError
+______________________________________________________________________ test_param_fail[2] ______________________________________________________________________
+
+n = 2
+
+    @pytest.mark.parametrize("n", [1, 2])
+    def test_param_fail(n):
+>       assert n != 2
+E       assert 2 != 2
+
+fixtures/ids_sample/test_ids.py:15: AssertionError
+================================================================= 2 failed, 4 passed in 0.14s ==================================================================
