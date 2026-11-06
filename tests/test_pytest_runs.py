@@ -130,3 +130,28 @@ def test_teardown_errors_merge_the_same_way_in_v_and_rA():
         # pytest counts a test with a teardown error twice: 11 in the line, 9 tests.
         assert run.summary_total == 9 == len(run.results)
     assert diff_runs(v, ra).is_empty()
+
+
+def test_random_verbose_lines_with_parenthesised_reasons():
+    # A compact form of the fuzz run that found the ")" bug: random parameter ids and
+    # reasons, written the way pytest -v writes them, must come back whole.
+    import random
+
+    rng = random.Random(0)
+    alphabet = "ab (x) [y] - ü:"
+    statuses = ["PASSED", "FAILED", "SKIPPED", "XFAIL", "XPASS", "ERROR"]
+    expected, lines = [], ["============================= test session starts ===="]
+    for i in range(300):
+        param = "".join(rng.choice(alphabet) for _ in range(rng.randint(0, 8))).strip()
+        param = param.replace("[", "").replace("]", "")
+        tid = f"t.py::test_{i}[{param}]" if param else f"t.py::test_{i}"
+        status = rng.choice(statuses)
+        reason = ""
+        if status in ("SKIPPED", "XFAIL"):
+            reason = " (" + "".join(rng.choice(alphabet) for _ in range(rng.randint(1, 9))) + ")"
+        pad = " " * rng.randint(1, 40)
+        lines.append(f"{tid} {status}{reason}{pad}[{i % 100:3d}%]")
+        expected.append(tid)
+    lines.append("==== 300 passed in 0.10s ====")
+    run = _run_text("\n".join(lines))
+    assert [r.id for r in run.results] == expected
