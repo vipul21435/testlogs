@@ -103,3 +103,13 @@ def test_python310_subtest_failure_of_the_last_test_is_read_from_its_header():
         ("pkg.m.C.test_sub", Status.FAILED),
     ]
     assert not [n for n in run.notes if "summary counts" in n]
+
+
+def test_printed_lines_after_the_run_summary_are_not_results():
+    # stdout redirected to a file is block-buffered: what the tests printed lands
+    # after "Ran N tests" and the OK/FAILED line, and one printed line is shaped
+    # like a result.
+    for name in ("unittest-v-py310.log", "unittest-v-py312.log"):
+        run = parse((FIX / name).read_text())
+        assert not [r for r in run.results if r.id.startswith("pkg.")], name
+        assert "1 result-shaped line after the run summary ignored (printed output)" in run.notes

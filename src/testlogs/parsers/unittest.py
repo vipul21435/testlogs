@@ -15,7 +15,9 @@ and ``test_x`` takes its status from its ``FAIL: test_x (qual) (i=1)`` header.
 With unbuffered stdout a test's own output follows the `` ... `` and the result
 comes after it, on the same line (``... xok``) or a later one. A result word that
 only ends a line of output (``... look``) is kept as a guess until the next line
-shows whether the real result follows.
+shows whether the real result follows. With stdout redirected to a file (block
+buffering) the output lands after the ``Ran N tests`` line instead, and nothing
+after that line is read as a result.
 """
 
 from __future__ import annotations
@@ -84,6 +86,7 @@ def parse(lines: list[str]) -> Run:
     unresolved: dict[str, tuple[int, str]] = {}
     from_header: dict[str, Status] = {}
     complete = False
+    after_summary = 0  # result-shaped lines printed after "Ran N tests"
 
     def settle(status: Status | None) -> None:
         nonlocal pending, guess
@@ -96,6 +99,11 @@ def parse(lines: list[str]) -> Run:
 
     for raw in lines:
         line = raw.rstrip()
+        if complete:
+            # Output the tests printed to a block-buffered stdout comes after the summary.
+            if _HEAD.match(line) or _SUB.match(line):
+                after_summary += 1
+            continue
         m = _RAN.match(line)
         if m:
             settle(guess)
@@ -159,6 +167,11 @@ def parse(lines: list[str]) -> Run:
     ]
     for at, result in reversed(sorted(late, key=lambda x: x[0])):
         run.results.insert(at, result)
+    if after_summary:
+        run.notes.append(
+            f"{plural(after_summary, 'result-shaped line')} after the run summary ignored "
+            "(printed output)"
+        )
     if sub_failed:
         n = len(sub_failed)
         run.notes.append(f"{plural(n, 'test')} with failing subtests, recorded as failed")
