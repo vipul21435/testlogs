@@ -1,0 +1,5 @@
+     Running unittests src/lib.rs (target/debug/deps/sample-0123abcd)
+
+running 5 tests
+test parser::tests::empty_input ... ok
+test parser::tests::unicode_name_ü ... ok

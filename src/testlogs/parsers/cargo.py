@@ -4,7 +4,10 @@ Pretty prints ``test name ... ok`` (or FAILED, ignored) one per line; terse
 prints one character per test (``.``, ``F``, ``i``) and names only the failures
 in the ``failures:`` section. Each test binary opens with ``running N tests``
 and closes with ``test result: ok. N passed; ...``. The ``Running`` line before a
-block names the binary, which becomes the file.
+block names the target source (``src/lib.rs``, ``tests/api.rs``), which becomes
+the file; the id is ``file::test_name`` so equal names in two binaries differ.
+Terse output names only failures, so its passing tests are counted in a note
+rather than given invented ids.
 """
 
 from __future__ import annotations
@@ -27,7 +30,10 @@ _STATUS = {"ok": Status.PASSED, "FAILED": Status.FAILED, "ignored": Status.SKIPP
 
 
 def looks_like(lines: list[str]) -> bool:
-    return any(_BLOCK.match(ln) for ln in lines) and any(_RESULT.match(ln) for ln in lines)
+    # A cut-off log has no result line, so a pretty test line also counts.
+    return any(_BLOCK.match(ln) for ln in lines) and any(
+        _RESULT.match(ln) or _TEST.match(ln) for ln in lines
+    )
 
 
 def parse(lines: list[str]) -> Run:
@@ -38,6 +44,7 @@ def parse(lines: list[str]) -> Run:
     terse_chars = ""
     failure_names: list[str] = []
     after_failures = False
+    blocks_closed = 0
     for raw in lines:
         line = raw.rstrip()
         m = _RUNNING.match(line)
@@ -64,21 +71,18 @@ def parse(lines: list[str]) -> Run:
         m = _RESULT.match(line)
         if m:
             in_block = False
+            blocks_closed += 1
             if block_results:
                 run.results.extend(block_results)
             else:
-                # Terse: named failures first, then unnamed passed and ignored tests.
-                remaining = list(terse_chars)
+                # Terse names only the failures; passing and ignored tests are counted.
                 for name in failure_names:
-                    run.results.append(TestResult(name, Status.FAILED, file))
-                    if "F" in remaining:
-                        remaining.remove("F")
-                for i, ch in enumerate(remaining, 1):
-                    status = Status.SKIPPED if ch == "i" else Status.PASSED
-                    run.results.append(TestResult(f"{file}::unnamed test {i}", status, file))
+                    run.results.append(TestResult(f"{file}::{name}", Status.FAILED, file))
                 if terse_chars:
                     run.notes.append(
-                        f"terse output in {file or 'a test binary'}: passing tests are unnamed"
+                        f"terse output in {file or 'a test binary'}: "
+                        f"{terse_chars.count('.')} passed and {terse_chars.count('i')} ignored "
+                        "tests are not named"
                     )
             expected = int(m.group("passed")) + int(m.group("failed")) + int(m.group("ignored"))
             got = len(block_results) if block_results else len(terse_chars)
@@ -93,7 +97,7 @@ def parse(lines: list[str]) -> Run:
             res = m.group("res")
             if res.startswith("bench:"):
                 continue
-            block_results.append(TestResult(m.group("name"), _STATUS[res], file))
+            block_results.append(TestResult(f"{file}::{m.group('name')}", _STATUS[res], file))
             continue
         if _TERSE.match(line) and not block_results:
             terse_chars += line
@@ -101,7 +105,7 @@ def parse(lines: list[str]) -> Run:
         run.incomplete = True
         run.results.extend(block_results)
         run.notes.append("last test block has no 'test result:' line")
-    if not run.results and not run.incomplete:
+    if not blocks_closed and not run.incomplete:
         run.incomplete = True
         run.notes.append("no test results found")
     return run

@@ -1,0 +1,43 @@
+   Compiling sample v0.1.0 (/work/sample)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.23s
+     Running unittests src/lib.rs (target/debug/deps/sample-0123abcd)
+
+running 5 tests
+test parser::tests::empty_input ... ok
+test parser::tests::unicode_name_ü ... ok
+test parser::tests::needs_network ... ignored, requires a server
+test render::tests::wide_table ... FAILED
+test render::tests::narrow_table ... ok
+
+failures:
+
+---- render::tests::wide_table stdout ----
+captured output in the middle of the run
+thread 'render::tests::wide_table' panicked at src/render.rs:40:9:
+assertion `left == right` failed
+  left: "a"
+ right: "b"
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    render::tests::wide_table
+
+test result: FAILED. 3 passed; 1 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/integration.rs (target/debug/deps/integration-4567cdef)
+
+running 2 tests
+test round_trip ... ok
+test needs_network ... ignored
+
+test result: ok. 1 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests sample
+
+running 1 test
+test src/lib.rs - parse (line 12) ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
+
+error: test failed, to rerun pass `--lib`
