@@ -20,7 +20,14 @@ def _read(path: str) -> str:
 
 
 def _load(path: str, fmt: str | None, prefixes: list[str] | None = None) -> Run:
-    run = parse(_read(path), fmt)
+    text = _read(path)
+    try:
+        run = parse(text, fmt)
+    except ValueError:
+        raise
+    except Exception as exc:  # a parser bug on odd input: one line, not a traceback
+        what = fmt or "the detected format"
+        raise ValueError(f"{path}: cannot parse as {what}: {exc!r}") from exc
     for prefix in prefixes or []:
         run = run.strip_prefix(prefix)
     return run

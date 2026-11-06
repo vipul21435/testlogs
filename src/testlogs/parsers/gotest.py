@@ -98,9 +98,16 @@ def parse_json(lines: list[str]) -> Run:
         except ValueError:
             bad += 1
             continue
+        if not isinstance(ev, dict):
+            bad += 1
+            continue
         test = ev.get("Test")
         pkg = ev.get("Package", "")
         action = ev.get("Action")
+        if not isinstance(test, str):
+            test = str(test) if test else ""
+        if not isinstance(pkg, str):
+            pkg = str(pkg)
         if not test:
             # A package-level pass, fail or skip closes the package.
             if action in _ACTIONS:
@@ -114,7 +121,8 @@ def parse_json(lines: list[str]) -> Run:
         elif action in _ACTIONS:
             started.discard((pkg, test))
             raw_secs = ev.get("Elapsed")
-            dur = float(raw_secs) if raw_secs is not None else None
+            ok = isinstance(raw_secs, (int, float)) and not isinstance(raw_secs, bool)
+            dur = float(raw_secs) if ok else None
             tid = f"{pkg}::{test}" if pkg else test
             run.results.append(TestResult(tid, _ACTIONS[action], pkg, dur))
     if bad:
