@@ -113,3 +113,18 @@ def test_printed_lines_after_the_run_summary_are_not_results():
         run = parse((FIX / name).read_text())
         assert not [r for r in run.results if r.id.startswith("pkg.")], name
         assert "1 result-shaped line after the run summary ignored (printed output)" in run.notes
+
+
+def test_setupclass_error_is_one_error_record_on_both_versions():
+    # 3.12 prints "setUpClass (q.Broken) ... ERROR"; 3.10 prints a bare "ERROR" line,
+    # so only the "ERROR: setUpClass (q.Broken)" header names the class.
+    for name in ("unittest-v-py310.log", "unittest-v-py312.log"):
+        run = parse((FIX / name).read_text())
+        s = {r.id: r.status for r in run.results}
+        assert s[PY + "Broken.setUpClass"] is Status.ERROR, name
+        assert len(run.results) == 4
+        assert run.summary_total == 4
+        assert (
+            f"{PY}Broken.setUpClass failed: the tests it sets up did not run" in run.notes
+        ), name
+        assert not [n for n in run.notes if "summary counts" in n], name

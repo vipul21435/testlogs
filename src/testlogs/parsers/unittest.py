@@ -48,6 +48,8 @@ _TAIL = re.compile(r"^.*\.\.\. " + _RESULT_RE + r"\s*$")
 _DETAIL = re.compile(
     r"^(?P<kind>FAIL|ERROR): (?P<name>\S+) \((?P<qual>[\w.]+)\)(?P<params> \(.*\))?$"
 )
+# Class and module fixtures: their error stops the tests they set up from running.
+_FIXTURES = ("setUpClass", "tearDownClass", "setUpModule", "tearDownModule")
 _RAN = re.compile(r"^Ran (?P<n>\d+) tests? in [\d.]+s$")
 
 
@@ -160,6 +162,12 @@ def parse(lines: list[str]) -> Run:
             guess = _status(ends.group("result")) if ends else None
     # A guess left open at the end of a cut log is dropped, not recorded.
     recorded = {r.id for r in run.results}
+    for tid, kind in from_header.items():
+        name = tid.rsplit(".", 1)[-1]
+        if name in _FIXTURES and tid not in recorded:
+            # Python 3.10 prints a bare "ERROR" line for a failing setUpClass.
+            run.results.append(TestResult(tid, kind, tid.rsplit(".", 1)[0]))
+            recorded.add(tid)
     late = [
         (at, TestResult(tid, from_header[tid], file))
         for tid, (at, file) in unresolved.items()
@@ -167,6 +175,15 @@ def parse(lines: list[str]) -> Run:
     ]
     for at, result in reversed(sorted(late, key=lambda x: x[0])):
         run.results.insert(at, result)
+    fixture_errors = [r.id for r in run.results if r.id.rsplit(".", 1)[-1] in _FIXTURES]
+    for tid in fixture_errors:
+        if tid.rsplit(".", 1)[-1].startswith("setUp"):
+            run.notes.append(f"{tid} failed: the tests it sets up did not run")
+        else:
+            run.notes.append(f"{tid} failed after its tests ran")
+    if run.summary_total is not None:
+        # "Ran N tests" does not count a class or module fixture, but it has a record.
+        run.summary_total += len(fixture_errors)
     if after_summary:
         run.notes.append(
             f"{plural(after_summary, 'result-shaped line')} after the run summary ignored "
