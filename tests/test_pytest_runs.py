@@ -117,3 +117,16 @@ def test_small_quiet_logs_are_detected():
     assert detect_format(text) == "pytest"
     run = _run("pytest-q-one.log")
     assert not run.incomplete and run.summary_total == 1
+
+
+def test_teardown_errors_merge_the_same_way_in_v_and_rA():
+    from testlogs import diff_runs
+
+    v, ra = _run("pytest-v-tricky.log"), _run("pytest-rA-tricky.log")
+    for run in (v, ra):
+        by = {r.id.rsplit("::", 1)[1]: r.status.value for r in run.results}
+        assert by["test_fail_and_teardown_error"] == "failed"
+        assert by["test_pass_and_teardown_error"] == "error"
+        # pytest counts a test with a teardown error twice: 11 in the line, 9 tests.
+        assert run.summary_total == 9 == len(run.results)
+    assert diff_runs(v, ra).is_empty()

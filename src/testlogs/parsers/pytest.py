@@ -171,6 +171,24 @@ def _file_of(node_id: str) -> str:
     return node_id.split(":", 1)[0]
 
 
+def _merge(
+    results: list[TestResult], order: list[str], seen: dict[str, set[Status]]
+) -> dict[str, Status]:
+    status: dict[str, Status] = {}
+    for r in results:
+        if r.id not in seen:
+            order.append(r.id)
+            seen[r.id] = set()
+        seen[r.id].add(r.status)
+        old = status.get(r.id)
+        if old is Status.FAILED and r.status is Status.ERROR:
+            continue
+        if old is Status.ERROR and r.status is not Status.FAILED:
+            continue
+        status[r.id] = r.status
+    return status
+
+
 def parse(lines: list[str]) -> Run:
     run = Run(format="pytest")
     verbose: list[TestResult] = []
@@ -294,16 +312,13 @@ def parse(lines: list[str]) -> Run:
             pending = tid
     # Merge: verbose lines give the order and every id; summary rows override the
     # status (a verbose line can be split by captured output, the summary cannot).
+    # A test whose setup or teardown errors gets a second line or row; the two are
+    # merged the same way from either source (failed over error over the rest).
     order: list[str] = []
-    status: dict[str, Status] = {}
-    for r in verbose:
-        if r.id not in status:
-            order.append(r.id)
-        status[r.id] = r.status
-    for r in summary:
-        if r.id not in status:
-            order.append(r.id)
-        status[r.id] = r.status
+    seen: dict[str, set[Status]] = {}
+    v_status = _merge(verbose, order, seen)
+    s_status = _merge(summary, order, seen)
+    status = {**v_status, **s_status}
     for tid in subfailed:
         if tid not in status:
             order.append(tid)
@@ -335,7 +350,9 @@ def parse(lines: list[str]) -> Run:
         run.notes.append(note)
     if final_total is not None:
         # pytest counts each failing subtest as one "failed" on top of its test.
-        run.summary_total = final_total - sum(subfailed.values())
+        # and a test with a setup or teardown error once more as an error.
+        doubled = sum(1 for st in seen.values() if Status.ERROR in st and len(st) > 1)
+        run.summary_total = final_total - sum(subfailed.values()) - doubled
     if pending is not None and unfinished is None and not complete:
         unfinished = pending
     run.incomplete = not complete or bool(interrupted)
