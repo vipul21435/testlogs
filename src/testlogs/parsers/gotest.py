@@ -84,6 +84,7 @@ def parse(lines: list[str]) -> Run:
 def parse_json(lines: list[str]) -> Run:
     run = Run(format="go-json")
     started: set[tuple[str, str]] = set()
+    open_packages: dict[str, None] = {}  # insertion-ordered set
     bad = 0
     for raw in lines:
         line = raw.strip()
@@ -95,10 +96,16 @@ def parse_json(lines: list[str]) -> Run:
             bad += 1
             continue
         test = ev.get("Test")
-        if not test:
-            continue
         pkg = ev.get("Package", "")
         action = ev.get("Action")
+        if not test:
+            # A package-level pass, fail or skip closes the package.
+            if action in _ACTIONS:
+                open_packages.pop(pkg, None)
+            elif pkg:
+                open_packages.setdefault(pkg, None)
+            continue
+        open_packages.setdefault(pkg, None)
         if action == "run":
             started.add((pkg, test))
         elif action in _ACTIONS:
@@ -113,4 +120,11 @@ def parse_json(lines: list[str]) -> Run:
     if started:
         run.incomplete = True
         run.notes.append(f"{len(started)} tests started but never finished")
+    if not run.results and not started and not bad:
+        run.incomplete = True
+        run.notes.append("no test events found")
+    if open_packages:
+        run.incomplete = True
+        first = next(iter(open_packages))
+        run.notes.append(f"{len(open_packages)} packages have no final pass or fail event: {first}")
     return run
