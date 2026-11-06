@@ -9,10 +9,18 @@ from __future__ import annotations
 import re
 
 _ANSI = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b\][^\x07]*\x07|\x1b[()][A-Z0-9]")
+# A CI job log line: optional "job<TAB>step<TAB>" then an ISO timestamp, then the
+# runner's own text. Both the raw download and the per-job view use this shape.
+_CI_PREFIX = re.compile(r"^(?:[^\t\n]*\t[^\t\n]*\t)?\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?Z ?")
 
 
 def strip_ansi(text: str) -> str:
     return _ANSI.sub("", text)
+
+
+def strip_ci_prefix(line: str) -> str:
+    """Drop a CI log's per-line job, step and timestamp prefix."""
+    return _CI_PREFIX.sub("", line, count=1)
 
 
 def resolve_carriage_returns(text: str) -> str:
@@ -35,4 +43,4 @@ def resolve_carriage_returns(text: str) -> str:
 def clean_lines(text: str) -> list[str]:
     text = strip_ansi(text)
     text = resolve_carriage_returns(text)
-    return text.split("\n")
+    return [strip_ci_prefix(ln) for ln in text.split("\n")]
