@@ -6,6 +6,9 @@ names only the failures under it. The ``Tests  2 failed | 5 passed (9)`` line
 closes the run. Lines joined by `` > `` keep the file as the first segment.
 A test file that fails to load has no test lines; its `` FAIL  file [ file ]``
 line under "Failed Suites" becomes one error record whose id is the file.
+What a test prints comes under a ``stdout | file > test`` (or ``stderr |``) header
+and runs to the next blank line; those lines are skipped, so a printed ``✓ x`` is
+not a result. A blank line printed by the test ends the block early.
 """
 
 from __future__ import annotations
@@ -22,6 +25,7 @@ _FILE = re.compile(r"^\s*(?:❯|✓|×)\s+(?P<file>\S+\.[cm]?[jt]sx?)\s+\((?P<n>
 _SUITE_FAIL = re.compile(r"^\s*FAIL\s+(?P<file>\S+) \[ .* \]$")
 _FILES = re.compile(r"^\s*Test Files\s+(?P<body>.*\(\d+\))$")
 _TOTAL = re.compile(r"^\s*Tests\s+(?P<body>.*\(\d+\))$")
+_CAPTURED = re.compile(r"^(?:stdout|stderr) \| ")
 _MARKS = {"✓": Status.PASSED, "×": Status.FAILED, "✗": Status.FAILED, "↓": Status.SKIPPED}
 
 
@@ -38,8 +42,15 @@ def parse(lines: list[str]) -> Run:
     default_mode = False
     in_failures = False
     failed_files: set[str] = set()
+    captured = False  # inside a "stdout | ..." block of a test's own output
     for raw in lines:
         line = raw.rstrip()
+        if captured:
+            captured = bool(line.strip())
+            continue
+        if _CAPTURED.match(line):
+            captured = True
+            continue
         m = _TOTAL.match(line)
         if m:
             complete = True

@@ -1,0 +1,43 @@
+
+ RUN  v2.1.9 /work/fixtures/node_sample
+
+stdout | vitest-print/print.test.js > printing > prints a pass mark
+  ✓ fake passing line
+
+stderr | vitest-print/print.test.js > printing > prints a fail mark
+  × fake failing line
+
+stdout | vitest-print/print.test.js > printing > really fails
+  ✓ another fake line
+
+ ✓ vitest-print/print.test.js > printing > prints a pass mark
+ ✓ vitest-print/print.test.js > printing > prints a fail mark
+ × vitest-print/print.test.js > printing > really fails
+   → expected 1 to be 2 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  vitest-print/print.test.js > printing > really fails
+AssertionError: expected 1 to be 2 // Object.is equality
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ vitest-print/print.test.js:17:15
+     15|   test('really fails', () => {
+     16|     console.log('  ✓ another fake line');
+     17|     expect(1).toBe(2);
+       |               ^
+     18|   });
+     19| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  15:56:07
+   Duration  783ms (transform 23ms, setup 0ms, collect 21ms, tests 15ms, environment 0ms, prepare 134ms)
+

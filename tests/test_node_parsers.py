@@ -185,3 +185,17 @@ def test_nodetest_printed_result_lines_outside_the_tree_are_not_tests():
     # node counts the parent of subtests as a test; its spec line looks like a suite's.
     assert run.summary_total == 5
     assert any("counts 5 tests; 4 records" in n for n in run.notes)
+
+
+def test_vitest_printed_output_blocks_are_not_results():
+    # vitest prints console output under "stdout | file > test" up to a blank line.
+    pf = "vitest-print/print.test.js::printing > "
+    verbose = parse((FIX / "vitest-verbose-print.log").read_text())
+    assert [(r.id, r.status.value) for r in verbose.results] == [
+        (pf + "prints a pass mark", "passed"),
+        (pf + "prints a fail mark", "passed"),
+        (pf + "really fails", "failed"),
+    ]
+    default = parse((FIX / "vitest-default-print.log").read_text())
+    assert [(r.id, r.status.value) for r in default.results] == [(pf + "really fails", "failed")]
+    assert not [n for n in verbose.notes if "summary counts" in n]

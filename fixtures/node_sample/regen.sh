@@ -27,6 +27,10 @@ VB="npx vitest run --config vitest-broken.config.mjs"
 $VB > $OUT/vitest-default-broken.log 2>&1
 $VB --reporter=verbose > $OUT/vitest-verbose-broken.log 2>&1
 $VB --reporter=json --outputFile=$OUT/vitest-report-broken.json > /dev/null 2>&1
+# Tests that print lines shaped like vitest's result lines ("  ✓ ...", "  × ...").
+VP="npx vitest run --config vitest-print.config.mjs"
+$VP > $OUT/vitest-default-print.log 2>&1
+$VP --reporter=verbose > $OUT/vitest-verbose-print.log 2>&1
 M="npx mocha mocha/maths.spec.js mocha/strings.spec.js"
 $M --reporter spec > $OUT/mocha-spec.log 2>&1
 $M --reporter tap > $OUT/mocha-tap.log 2>&1

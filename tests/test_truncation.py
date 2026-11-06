@@ -43,6 +43,7 @@ CLOSERS = {
     "mocha-spec-edge.log": r"^\s+\d+ passing",
     "mocha-spec-npm.log": r"^\s+\d+ passing",
     "vitest-verbose-broken.log": r"^\s+Tests\s",
+    "vitest-verbose-print.log": r"^\s+Tests\s",
     "jest-verbose-edge.log": r"^Tests:",
     "nodetest-spec-edge.log": r"^ℹ tests",
 }
