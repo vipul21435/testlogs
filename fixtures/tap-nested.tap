@@ -1,0 +1,17 @@
+TAP version 14
+# Subtest: maths
+    # Subtest: adds
+    ok 1 - adds
+      ---
+      duration_ms: 1.5
+      ...
+    # Subtest: divides by zero
+    not ok 2 - divides by zero
+      ---
+      duration_ms: 0.4
+      ...
+    1..2
+not ok 1 - maths
+ok 2 - strings # SKIP no locale
+ok 3 - later # TODO flaky
+1..3

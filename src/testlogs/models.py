@@ -25,6 +25,8 @@ class TestResult:
     seconds, or ``None`` when the log carries no timing.
     """
 
+    __test__ = False  # keep pytest from collecting this class
+
     id: str
     status: Status
     file: str = ""
