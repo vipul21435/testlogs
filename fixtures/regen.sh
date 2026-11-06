@@ -76,6 +76,9 @@ $P -v -p pytester fixtures/pytester_sample > fixtures/pytest-v-pytester.log 2>&1
 n=$(grep -n "^=* 1 failed, 1 passed in" fixtures/pytest-v-pytester.log | head -n 1 | cut -d: -f1)
 head -n "$n" fixtures/pytest-v-pytester.log > fixtures/pytest-v-pytester-cut.log
 
+# The same outer test under -s: the inner session's banner is glued to the outer id.
+$P -v -s -p pytester fixtures/pytester_sample > fixtures/pytest-v-s-pytester.log 2>&1
+
 # Replace the machine's checkout path and host name so fixtures are portable.
 for f in fixtures/*.log fixtures/*.xml; do
   sed -i.bak -e "s#$ROOT#/work#g" -e "s#$HOME#/home/user#g" \

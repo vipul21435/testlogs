@@ -1,0 +1,47 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.2.0, pluggy-1.7.0 -- /work/.venv/bin/python3
+rootdir: /work
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 2 items
+
+fixtures/pytester_sample/test_outer.py::test_inner_run ============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.2.0, pluggy-1.7.0 -- /work/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /tmp/pytest-of-user/pytest-2564/test_inner_run0
+plugins: cov-7.1.0
+collecting ... collected 2 items
+
+test_inner_run.py::test_inner_a PASSED                                   [ 50%]
+test_inner_run.py::test_inner_b FAILED                                   [100%]
+
+=================================== FAILURES ===================================
+_________________________________ test_inner_b _________________________________
+
+>   def test_inner_b(): assert 0
+                        ^^^^^^^^
+E   assert 0
+
+test_inner_run.py:2: AssertionError
+=========================== short test summary info ============================
+FAILED test_inner_run.py::test_inner_b - assert 0
+========================= 1 failed, 1 passed in 0.02s ==========================
+FAILED
+fixtures/pytester_sample/test_outer.py::test_other PASSED
+
+=================================== FAILURES ===================================
+________________________________ test_inner_run ________________________________
+
+pytester = <Pytester PosixPath('/tmp/pytest-of-user/pytest-2564/test_inner_run0')>
+
+    def test_inner_run(pytester):
+        pytester.makepyfile("def test_inner_a(): pass\ndef test_inner_b(): assert 0\n")
+        result = pytester.runpytest("-v")
+>       assert result.ret == 0
+E       assert <ExitCode.TESTS_FAILED: 1> == 0
+E        +  where <ExitCode.TESTS_FAILED: 1> = <RunResult ret=1 len(stdout.lines)=21 len(stderr.lines)=0 duration=0.05s>.ret
+
+/work/fixtures/pytester_sample/test_outer.py:7: AssertionError
+=========================== short test summary info ============================
+FAILED fixtures/pytester_sample/test_outer.py::test_inner_run - assert <ExitC...
+========================= 1 failed, 1 passed in 0.08s ==========================

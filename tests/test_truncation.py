@@ -37,6 +37,7 @@ CLOSERS = {
     "pytest-v-tricky.log": r"^=+ .* in [\d.]+s",
     "pytest-rA-tricky.log": r"^=+ .* in [\d.]+s",
     "pytest-v-pytester.log": r"^=+ .* in [\d.]+s",
+    "pytest-v-s-pytester.log": r"^=+ .* in [\d.]+s",
     "unittest-v-print.log": r"^Ran \d+ tests",
     "mocha-spec-edge.log": r"^\s+\d+ passing",
     "mocha-spec-npm.log": r"^\s+\d+ passing",

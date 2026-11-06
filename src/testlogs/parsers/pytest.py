@@ -12,7 +12,9 @@ stops early, so a ``!!! KeyboardInterrupt !!!`` or ``!!! Interrupted: ... !!!``
 banner also makes the run incomplete, and the test that was running is named.
 Lines inside the FAILURES, ERRORS and PASSES sections are captured output, and a
 whole pytest session printed by a test (pytester) is skipped from its
-``test session starts`` line to its own final line.
+``test session starts`` line to its own final line. Under ``-s`` that banner is
+glued to the outer test's id (``a.py::test_x ===== test session starts =====``);
+the outer test then takes the bare status word printed after the inner final line.
 
 Measured with pytest 9.2, pytest reports ``unittest`` subtests: the parent test is
 still printed ``PASSED`` and each failing subtest gets a ``SUBFAILED(i=1) node::id`` summary row.
@@ -227,6 +229,13 @@ def parse(lines: list[str]) -> Run:
             if _FINAL.match(line) or _FINAL_QUIET.match(line):
                 depth -= 1
             continue
+        if not in_section and not in_summary:
+            head = _leading_node_id(line)
+            if head is not None and _SESSION_START.match(line[len(head) :].strip()):
+                # -s: a test's own pytest session starts on the line of its id.
+                pending = head
+                depth += 1
+                continue
         if _SECTION.match(line):
             in_section = True
             captured = False

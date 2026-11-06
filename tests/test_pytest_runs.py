@@ -157,3 +157,16 @@ def test_random_verbose_lines_with_parenthesised_reasons():
     lines.append("==== 300 passed in 0.10s ====")
     run = _run_text("\n".join(lines))
     assert [r.id for r in run.results] == expected
+
+
+def test_inner_session_glued_to_the_outer_id_under_s_adds_no_records():
+    # With -s the inner banner follows the outer id on the same line, and the outer
+    # test's status is the bare "FAILED" after the inner final line.
+    run = _run("pytest-v-s-pytester.log")
+    assert not run.incomplete
+    assert [(r.id, r.status.value) for r in run.results] == [
+        ("fixtures/pytester_sample/test_outer.py::test_inner_run", "failed"),
+        ("fixtures/pytester_sample/test_outer.py::test_other", "passed"),
+    ]
+    assert run.summary_total == 2
+    assert run.notes == []
