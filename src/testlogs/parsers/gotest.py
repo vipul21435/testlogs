@@ -121,8 +121,9 @@ def parse_json(lines: list[str]) -> Run:
         elif action in _ACTIONS:
             started.discard((pkg, test))
             raw_secs = ev.get("Elapsed")
-            ok = isinstance(raw_secs, (int, float)) and not isinstance(raw_secs, bool)
-            dur = float(raw_secs) if ok else None
+            dur: float | None = None
+            if isinstance(raw_secs, (int, float)) and not isinstance(raw_secs, bool):
+                dur = float(raw_secs)
             tid = f"{pkg}::{test}" if pkg else test
             run.results.append(TestResult(tid, _ACTIONS[action], pkg, dur))
     if bad:
