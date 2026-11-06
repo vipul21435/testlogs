@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `examples/js_real_data.sh` and `examples/js_real_data.py`: run the jest suite of
+  ms and the vitest suite of ufo at pinned commits with several reporters, once as is
+  and once with one test made to fail by a reverted one-line edit, then check the
+  parsed counts against each runner's summary line and JSON report, compare ids
+  across reporters and diff the two runs. Results are in the README.
+
+### Fixed
+
+- vitest's TAP reporter (`--reporter=tap`), which writes each file and describe block
+  as a point ending in `{` closed by `}`: those points were read as tests and the run
+  was reported incomplete. They are now headers for the tests inside, and `# time=`
+  gives the duration.
+- vitest verbose lines: a test name with a space at either end, or an empty name, was
+  trimmed, so its id did not match the JSON report of the same run.
+
 ## 0.1.0 - 2026-11-06
 
 ### Added

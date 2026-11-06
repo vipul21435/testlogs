@@ -10,7 +10,10 @@ that was cut off is flagged incomplete instead of being read as a smaller passin
 On the 771-test suite of more-itertools, the `-v`, colour, `-rA` and JUnit logs of one
 run give the same 771 records, and 250 of 250 randomly cut copies of five logs are
 reported incomplete or rejected (`examples/real_data.py`, see
-[Results](#results-on-real-public-data)).
+[Results](#results-on-real-public-data)). On the jest suite of ms and the vitest suite
+of ufo, the per-status counts from the verbose, TAP, JUnit and JSON reporters agree with
+the runner's own summary line and JSON report, and so do the default reporters' totals
+(`examples/js_real_data.py`).
 
 ## Why this is hard
 
@@ -133,11 +136,11 @@ either log is incomplete). The Python API is `testlogs.parse(text, fmt=None)`,
 | `junit` | JUnit XML (`testcase` elements; tested on pytest's `--junitxml`) | real run, pytest 9.2.0 |
 | `unittest` | `python -m unittest -v` (3.10 and 3.11+ line shapes, doctests, subTest) | real run, Python 3.12 |
 | `jest` | jest default and `--verbose` | real run, jest 29.7.0 |
-| `vitest` | vitest default and `--reporter=verbose` | real run, vitest 2.1.9 |
+| `vitest` | vitest default and `--reporter=verbose` | real runs, vitest 2.1.9 and 4.1.5 |
 | `jest-json` | `jest --json` and `vitest --reporter=json` | real runs |
 | `mocha` | mocha `spec` reporter (TAP reporter goes to `tap`) | real run, mocha 10.8.2 |
 | `nodetest` | `node --test` spec reporter (TAP reporter goes to `tap`) | real run, Node 25.9.0 |
-| `tap` | TAP 13 and 14, nested subtests | real runs (mocha, node:test) and one hand-written file |
+| `tap` | TAP 13 and 14, nested subtests, vitest's `tap` and `tap-flat` reporters | real runs (mocha, node:test, vitest) and one hand-written file |
 | `go`, `go-json` | `go test -v`, `go test -json` | written to the documented format: go is not installed here |
 | `cargo` | `cargo test`, pretty and `--format terse` | written to the documented format: cargo is not installed here |
 
@@ -233,7 +236,15 @@ Both scripts replace the checkout path with `/work`, the home directory with
    closes an indented block is the suite's summary, not a test, and the YAML
    `duration_ms` under it is not given to its last child. Only an unescaped `#` starts
    a `SKIP`/`TODO` directive or a comment; `\#` and `\\` in a name are read as `#`
-   and `\`, which is how node:test writes them.
+   and `\`, which is how node:test writes them. vitest's TAP reporter instead writes
+   each file and describe block as a point ending in `{`, its tests indented below and
+   a `}` at the point's own indent
+   ([vitest reporters](https://vitest.dev/guide/reporters)); the TAP 14 specification
+   has no such blocks. testlogs reads that point as a header, takes `# time=1.2ms` as
+   the duration, and a block cut before its `}` makes the run incomplete. vitest
+   writes a verbose line as mark, name and duration with one space between them, so
+   a name with a space at either end, or an empty name (`suite > `), is kept as the
+   JSON report has it.
 8. **JUnit XML**. Each `testcase` is a record with id `classname::name` and duration
    from `time`; the status comes from its `error`, `failure` or `skipped` child, and
    `<skipped type="pytest.xfail">` is read as xfail. Surefire's `flakyFailure` and
@@ -331,14 +342,95 @@ run, 0 fixed, 0 broken, 119 appeared, 12 vanished, 0 other.
 
 Truncation (same `real_data.py` run): each of the five logs cut at 50 random byte offsets (seed 0): 50 of 50 cut
 copies of every log are reported incomplete or are rejected as unrecognisable; none is
-read as a complete, smaller run. The test suite also cuts 27 fixture logs at every line
-before their closing line (1,029 cuts) and checks each is incomplete
+read as a complete, smaller run. The test suite also cuts 29 fixture logs at every line
+before their closing line (1,067 cuts) and checks each is incomplete
 (`tests/test_truncation.py`).
 
-Tests: `uv run pytest -q --cov=testlogs` gives 208 passed and 98 % line coverage
-(1428 statements, 28 missed), in 1.9 s on the machine used here while it ran other jobs
-(load average about 50); the same suite passes on Python 3.10.20
+Tests: `uv run pytest -q --cov=testlogs` gives 220 passed and 98 % line coverage
+(1453 statements, 29 missed), in 1.5 s on the machine used here while it ran other jobs
+(load average about 8); the same suite passes on Python 3.10.20
 (`uv run --isolated --python 3.10 --with pytest --with-editable . python -m pytest -q`).
+
+### jest and vitest suites
+
+Data: [ms](https://github.com/vercel/ms) (MIT licence, checked on its
+[LICENSE page](https://github.com/vercel/ms/blob/main/LICENSE)), commit `4ff48cec099f`,
+run with jest 30.0.5 and ts-jest 29.4.0 (`jest --version` prints 30.0.4); and
+[ufo](https://github.com/unjs/ufo) (MIT licence, checked on its
+[LICENSE page](https://github.com/unjs/ufo/blob/main/LICENSE)), commit `f06c800d0c59`,
+run with vitest 4.1.5; both under Node 25.9.0. Only each suite's test runner is
+installed with npm, in the data directory next to the clone; the libraries' lint,
+build and release tools are not. Then one test in each suite is made to fail by a
+one-line `sed` edit (ms: `expect(ms('100')).toBe(100)` becomes `toBe(101)`; ufo:
+line 22 of `test/is-same.test.ts`, `toBe(false)` becomes `toBe(true)`), the suite is
+run again, and the edit is reverted with `git checkout`:
+
+```
+bash examples/js_real_data.sh DATA_DIR                      # clone, npm install, run, write DATA_DIR/logs
+uv run python examples/js_real_data.py DATA_DIR --repeats 9  # parse, time, cross-check
+```
+
+jest is run as `jest --env node --runInBand` (the package's own `test:nodejs` script
+plus a fixed file order) with the default reporter, `--verbose` and `--json`; vitest as
+`vitest run` with the default reporter, `--reporter=verbose`, `tap`, `tap-flat`,
+`junit` and `json` (the package's script adds `--typecheck`, a type check that needs
+typescript, which is left out). The `-broken` logs are the run with the one-line edit.
+Counts are passed/failed/skipped/total. "Summary line" is the runner's own closing line
+(jest `Tests:`, vitest `Tests ... (N)`) and "JSON report" the `num*Tests` fields of the
+JSON written by the same run (for a JSON log, its own fields); both are read by `js_real_data.py` with its own
+patterns, not with testlogs; for the JUnit file the summary column counts its
+`testcase` elements. Parse time is the median of 9 calls of `testlogs.parse`; the
+range is over three runs of the script on the same laptop as above (load average
+about 8).
+
+| log | format | lines | records | testlogs counts | summary line | JSON report | agree | parse time (ms) |
+|---|---|---|---|---|---|---|---|---|
+| ms jest default | jest | 18 | 0 | - (summary_total 167) | 167/0/0/167 | 167/0/0/167 | total only | 0.1-0.2 |
+| ms jest --verbose | jest | 202 | 167 | 167/0/0/167 | 167/0/0/167 | 167/0/0/167 | yes | 2.2-2.3 |
+| ms jest --json | jest-json | 1 | 167 | 167/0/0/167 | - | 167/0/0/167 | yes | 1.0-1.3 |
+| ms jest --verbose, broken | jest | 219 | 167 | 166/1/0/167 | 166/1/0/167 | 166/1/0/167 | yes | 2.2-2.5 |
+| ms jest --json, broken | jest-json | 1 | 167 | 166/1/0/167 | - | 166/1/0/167 | yes | 1.2-1.5 |
+| ufo vitest default | vitest | 9 | 0 | - (summary_total 489) | 489/0/0/489 | 489/0/0/489 | total only | 0.1 |
+| ufo vitest verbose | vitest | 498 | 489 | 489/0/0/489 | 489/0/0/489 | 489/0/0/489 | yes | 9.3-11.8 |
+| ufo vitest tap | tap | 653 | 489 | 489/0/0/489 | - | 489/0/0/489 | yes | 11.2-13.0 |
+| ufo vitest tap-flat | tap | 491 | 489 | 489/0/0/489 | - | 489/0/0/489 | yes | 13.0-14.2 |
+| ufo vitest junit | junit | 1,007 | 489 | 489/0/0/489 | 489/0/0/489 | 489/0/0/489 | yes | 2.7-3.2 |
+| ufo vitest json | jest-json | 1 | 489 | 489/0/0/489 | - | 489/0/0/489 | yes | 2.2-2.9 |
+| ufo vitest verbose, broken | vitest | 521 | 489 | 488/1/0/489 | 488/1/0/489 | 488/1/0/489 | yes | 10.1-11.4 |
+| ufo vitest tap, broken | tap | 661 | 489 | 488/1/0/489 | - | 488/1/0/489 | yes | 10.6-12.7 |
+| ufo vitest json, broken | jest-json | 1 | 489 | 488/1/0/489 | - | 488/1/0/489 | yes | 2.4-2.6 |
+
+None of the logs is reported incomplete. The default reporters of jest 30 and of
+vitest 4 (when not writing to a terminal) name no passing test, so those two logs give
+no records and only the total can be checked; it agrees.
+
+Two parser fixes came out of these runs, each with a regression test on a trimmed copy
+of the real log (`fixtures/vitest-tap.log`, `fixtures/vitest-verbose-spaces.log`).
+Before them, the vitest `tap` log gave 504 passed records for 489 tests and was
+reported incomplete: points that open a `{ ... }` block (a file or describe block) were
+read as tests, and the blocks as subtests never closed. And the vitest verbose parser
+trimmed the ends of each name, so 12 ids of the verbose log (empty test names, names
+that start or end with a space) had no match in the JSON report of the same run.
+
+Ids, against the verbose log of the same run, with the checkout path removed and `::`
+read as ` > `: the jest JSON and vitest JSON reports match exactly (0 appeared, 0
+vanished). 7 ids of the verbose log have no exact match in the `tap` log, 11 in
+`tap-flat` and 8 in `junit`, for reasons in the formats, not the runs: testlogs trims each TAP description, so a
+name's leading or trailing space is lost; and in the JUnit XML vitest drops the NUL character
+that starts 7 of ufo's test names and the tab in one name becomes a space (XML
+attribute values). With control characters removed, tabs read as spaces and each level
+trimmed (`loose_key` in the script), all of them match, with no status difference; that
+key folds ufo's 487 distinct ids into 482, because some of ufo's names differ only by
+a space at one end or a leading NUL. Even the exact ids are 487 for 489 tests: ufo
+repeats some test names.
+
+The one-line edits: in each of the five pairs compared (jest verbose and JSON; vitest
+verbose, `tap` and JSON) the diff of the clean run against the edited run is 0 fixed, 1 broken, 0 appeared, 0 vanished, 0 other, and the broken test is the one
+edited (`src/index.test.ts > ms(string) > should preserve ms` and
+`test/is-same.test.ts > isSamePath > /foo != /bar`). Each of the 12 logs over 1,000
+characters cut at 50 random byte offsets (seed 0): 50 of 50 cut copies of every log
+are reported incomplete or rejected. `js_real_data.sh` took 40 s here, with the clones
+and npm's package cache already in place.
 
 ## Limitations
 
@@ -389,6 +481,13 @@ Tests: `uv run pytest -q --cov=testlogs` gives 208 passed and 98 % line coverage
   diff a node:test test that went from failing to a body-less todo is listed as fixed.
 - A TAP subtest block without its own `1..N` plan is checked only through its parent:
   a missing child line goes unnoticed if the parent's result line is present.
+- The same run can give slightly different ids in different formats. testlogs trims
+  each TAP description, so a name's leading or trailing space is lost there; vitest's
+  JUnit XML leaves out NUL characters in names, and an XML parser reads a tab in an
+  attribute as a space. On ufo this is 7 to 11 of 489 ids (see
+  [jest and vitest suites](#jest-and-vitest-suites)); a diff across those formats
+  needs a `key` that folds the difference, as `loose_key` in
+  `examples/js_real_data.py` does, at the cost of merging names that differ only there.
 - unittest `file` is the dotted module, not a path; for a doctest it is the module the
   docstring lives in.
 - Detection is heuristic; pass `--format` for a log it cannot place. Logs that mix two
