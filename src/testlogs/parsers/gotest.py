@@ -3,7 +3,9 @@
 Verbose output prints ``=== RUN   TestX`` when a test starts and
 ``--- PASS: TestX (0.01s)`` (or FAIL, SKIP) when it ends; subtests are indented
 and named ``TestX/case``. The package line ``ok  pkg  0.1s`` (or ``FAIL pkg``)
-closes a package, so every result before it gets that package as its file.
+closes a package, so every result before it gets that package as its file. The id
+is ``package::TestName`` because the same test name can exist in two packages;
+results with no package line after them (a cut-off log) keep the bare name.
 JSON output is one event per line with ``Action``, ``Package``, ``Test`` and
 ``Elapsed``; the terminal actions are pass, fail and skip.
 """
@@ -62,7 +64,9 @@ def parse(lines: list[str]) -> Run:
         m = _PKG.match(line)
         if m:
             pkg = m.group("pkg")
-            run.results.extend(TestResult(r.id, r.status, pkg, r.duration) for r in ended)
+            run.results.extend(
+                TestResult(f"{pkg}::{r.id}", r.status, pkg, r.duration) for r in ended
+            )
             ended = []
     if ended:
         run.results.extend(ended)
@@ -101,7 +105,8 @@ def parse_json(lines: list[str]) -> Run:
             started.discard((pkg, test))
             raw_secs = ev.get("Elapsed")
             dur = float(raw_secs) if raw_secs is not None else None
-            run.results.append(TestResult(test, _ACTIONS[action], pkg, dur))
+            tid = f"{pkg}::{test}" if pkg else test
+            run.results.append(TestResult(tid, _ACTIONS[action], pkg, dur))
     if bad:
         run.incomplete = True
         run.notes.append(f"{bad} lines are not JSON events")

@@ -1,0 +1,4 @@
+=== RUN   TestParse
+--- PASS: TestParse (0.01s)
+=== RUN   TestRender
+    render_test.go:21: captured log line in the middle of the run

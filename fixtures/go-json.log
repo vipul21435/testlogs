@@ -1,0 +1,17 @@
+{"Time":"2026-01-02T03:04:05.1Z","Action":"start","Package":"example.com/sample/parser"}
+{"Time":"2026-01-02T03:04:05.2Z","Action":"run","Package":"example.com/sample/parser","Test":"TestParse"}
+{"Time":"2026-01-02T03:04:05.2Z","Action":"output","Package":"example.com/sample/parser","Test":"TestParse","Output":"=== RUN   TestParse\n"}
+{"Time":"2026-01-02T03:04:05.2Z","Action":"run","Package":"example.com/sample/parser","Test":"TestParse/unicode_name_ü"}
+{"Time":"2026-01-02T03:04:05.3Z","Action":"pass","Package":"example.com/sample/parser","Test":"TestParse/unicode_name_ü","Elapsed":0}
+{"Time":"2026-01-02T03:04:05.3Z","Action":"pass","Package":"example.com/sample/parser","Test":"TestParse","Elapsed":0.01}
+{"Time":"2026-01-02T03:04:05.3Z","Action":"run","Package":"example.com/sample/parser","Test":"TestRender"}
+{"Time":"2026-01-02T03:04:05.3Z","Action":"output","Package":"example.com/sample/parser","Test":"TestRender","Output":"    render_test.go:22: expected \"a\", got \"b\"\n"}
+{"Time":"2026-01-02T03:04:05.3Z","Action":"fail","Package":"example.com/sample/parser","Test":"TestRender","Elapsed":0}
+{"Time":"2026-01-02T03:04:05.3Z","Action":"run","Package":"example.com/sample/parser","Test":"TestSkipped"}
+{"Time":"2026-01-02T03:04:05.3Z","Action":"skip","Package":"example.com/sample/parser","Test":"TestSkipped","Elapsed":0}
+{"Time":"2026-01-02T03:04:05.4Z","Action":"output","Package":"example.com/sample/parser","Output":"FAIL\n"}
+{"Time":"2026-01-02T03:04:05.4Z","Action":"fail","Package":"example.com/sample/parser","Elapsed":0.015}
+{"Time":"2026-01-02T03:04:05.5Z","Action":"start","Package":"example.com/sample/render"}
+{"Time":"2026-01-02T03:04:05.5Z","Action":"run","Package":"example.com/sample/render","Test":"TestSlow"}
+{"Time":"2026-01-02T03:04:06.7Z","Action":"pass","Package":"example.com/sample/render","Test":"TestSlow","Elapsed":1.2}
+{"Time":"2026-01-02T03:04:06.7Z","Action":"pass","Package":"example.com/sample/render","Elapsed":1.204}
