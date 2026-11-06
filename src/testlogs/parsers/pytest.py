@@ -78,6 +78,10 @@ _SESSION_START = re.compile(r"^=+ test session starts =+$")
 # durations and short summary headers. Inside a section a final line counts only as
 # the log's last line (with -rN no summary header follows the tracebacks).
 _SECTION = re.compile(r"^=+ (?:FAILURES|ERRORS|PASSES|XFAILURES|XPASSES) =+$")
+# Inside a section: "---- Captured stdout call ----" starts a test's own output, and
+# "____ test_name ____" starts the next test's block.
+_CAPTURED = re.compile(r"^-+ Captured (?:stdout|stderr|log) .*-+$")
+_BLOCK = re.compile(r"^_{3,} .* _{3,}$")
 _SECTION_END = re.compile(
     r"^=+ (?:short test summary info|warnings summary|slowest .*durations.*) =+$"
 )
@@ -209,6 +213,7 @@ def parse(lines: list[str]) -> Run:
     seen_session = False
     depth = 0  # pytest sessions nested in captured output
     in_section = False
+    captured = False  # inside a section, within a test's captured output
     for idx, raw in enumerate(lines):
         line = raw.rstrip()
         if not line:
@@ -224,12 +229,19 @@ def parse(lines: list[str]) -> Run:
             continue
         if _SECTION.match(line):
             in_section = True
+            captured = False
             pending = None
             continue
         if in_section:
+            if _CAPTURED.match(line):
+                captured = True
+            elif _BLOCK.match(line):
+                captured = False
             if _SECTION_END.match(line):
                 in_section = False
-            elif (_FINAL.match(line) or _FINAL_QUIET.match(line)) and idx == last:
+            elif (
+                (_FINAL.match(line) or _FINAL_QUIET.match(line)) and idx == last and not captured
+            ):
                 in_section = False
             elif not _INTERRUPT.match(line):
                 continue

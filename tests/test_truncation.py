@@ -32,8 +32,19 @@ CLOSERS = {
     # binary or package; a cut between two of them is a documented gap, so only
     # cuts before the first closing line are checked.
     "cargo-pretty.log": r"^test result:",
+    "cargo-terse-long.log": r"^test result:",
+    # Logs whose captured output holds lines shaped like the closing line.
+    "pytest-v-tricky.log": r"^=+ .* in [\d.]+s",
+    "pytest-rA-tricky.log": r"^=+ .* in [\d.]+s",
+    "pytest-v-pytester.log": r"^=+ .* in [\d.]+s",
+    "unittest-v-print.log": r"^Ran \d+ tests",
+    "mocha-spec-edge.log": r"^\s+\d+ passing",
+    "mocha-spec-npm.log": r"^\s+\d+ passing",
+    "vitest-verbose-broken.log": r"^\s+Tests\s",
+    "jest-verbose-edge.log": r"^Tests:",
+    "nodetest-spec-edge.log": r"^ℹ tests",
 }
-FIRST_ONLY = {"cargo-pretty.log", "go-v.log", "go-json.log"}
+FIRST_ONLY = {"cargo-pretty.log", "cargo-terse-long.log", "go-v.log", "go-json.log"}
 
 
 @pytest.mark.parametrize("name", sorted(CLOSERS))
