@@ -37,7 +37,7 @@ _STATUS_WORDS = {
 # word anchors the end.
 _VERBOSE = re.compile(
     r"^(?P<id>\S+?::\S.*?)\s+(?P<status>PASSED|FAILED|SKIPPED|ERROR|XFAIL|XPASS)"
-    r"(?:\s+\((?P<reason>[^)]*)\))?"
+    r"(?:\s+\((?P<reason>.*)\))?"  # a reason may hold ")" itself: "(bug (see #1))"
     r"(?:\s+\[\s*\d+%\])?\s*$"
 )
 _SUMMARY = re.compile(
@@ -49,11 +49,11 @@ _RERUN = re.compile(r"^(?P<id>\S+?::\S.*?)\s+RERUN(?:\s+\[\s*\d+%\])?\s*$")
 # pytest-xdist: "[gw1] [ 42%] PASSED path::id". Workers finish in any order.
 _XDIST = re.compile(
     r"^\[gw\d+\] \[\s*\d+%\] (?P<status>PASSED|FAILED|SKIPPED|ERROR|XFAIL|XPASS) (?P<id>\S+?::.+?)"
-    r"(?:\s+\((?P<reason>[^)]*)\))?\s*$"
+    r"(?:\s+\((?P<reason>.*)\))?\s*$"
 )
 # With -s the test's own output follows the id, and the status word starts a later line.
 _BARE_STATUS = re.compile(
-    r"^(?P<status>PASSED|FAILED|SKIPPED|ERROR|XFAIL|XPASS)(?:\s+\([^)]*\))?(?:\s+\[\s*\d+%\])?$"
+    r"^(?P<status>PASSED|FAILED|SKIPPED|ERROR|XFAIL|XPASS)(?:\s+\(.*\))?(?:\s+\[\s*\d+%\])?$"
 )
 _SUBTEST = re.compile(
     r"^SUB(?P<status>FAILED|PASSED|SKIPPED)(?:\[[^\]]*\])?\s*(?:\((?P<params>.*?)\))?\s+"
@@ -218,6 +218,12 @@ def parse(lines: list[str]) -> Run:
         m = _XDIST.match(line) or _VERBOSE.match(line)
         if m:
             tid = m.group("id")
+            if m.re is _XDIST and tid.count("[") != tid.count("]"):
+                # "[gw0] ... SKIPPED a.py::t[x (y)] (reason)": the lazy id stopped
+                # inside the brackets; take the id up to the first space outside them.
+                whole = _leading_node_id(line[m.start("id") :])
+                if whole is not None and whole.count("[") == whole.count("]"):
+                    tid = whole
             verbose.append(TestResult(tid, _STATUS_WORDS[m.group("status")], _file_of(tid)))
             known.add(tid)
             pending = None
