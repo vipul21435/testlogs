@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from testlogs.models import Run, Status, TestResult
@@ -45,9 +46,21 @@ class RunDiff:
         }
 
 
-def diff_runs(before: Run, after: Run) -> RunDiff:
-    b = {k: _collapse(v) for k, v in before.by_id().items()}
-    a = {k: _collapse(v) for k, v in after.by_id().items()}
+def _grouped(run: Run, key: Callable[[str], str] | None) -> dict[str, Status]:
+    groups: dict[str, list[TestResult]] = {}
+    for r in run.results:
+        groups.setdefault(key(r.id) if key else r.id, []).append(r)
+    return {k: _collapse(v) for k, v in groups.items()}
+
+
+def diff_runs(before: Run, after: Run, key: Callable[[str], str] | None = None) -> RunDiff:
+    """Compare two runs by test id.
+
+    ``key`` maps each id before matching, for example
+    :func:`testlogs.ids.normalise_id` to compare a pytest log with a unittest log.
+    """
+    b = _grouped(before, key)
+    a = _grouped(after, key)
     d = RunDiff(before_incomplete=before.incomplete, after_incomplete=after.incomplete)
     for tid in sorted(set(a) - set(b)):
         d.appeared.append(tid)

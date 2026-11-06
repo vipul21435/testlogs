@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from testlogs.diff import diff_runs
+from testlogs.ids import normalise_id
 from testlogs.models import Run
 from testlogs.parsers import FORMATS, parse
 
@@ -74,6 +75,11 @@ def main(argv: list[str] | None = None) -> int:
     d.add_argument("--format", choices=FORMATS, default=None, help="apply to both logs")
     d.add_argument("--json", action="store_true")
     d.add_argument(
+        "--normalise-ids",
+        action="store_true",
+        help="match pytest, JUnit and unittest ids of the same test (path::C::t == path.C.t)",
+    )
+    d.add_argument(
         "--fail-on-broken", action="store_true", help="exit 1 when any test went passed -> failed"
     )
     args = ap.parse_args(argv)
@@ -83,7 +89,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         before = _load(args.before, args.format)
         after = _load(args.after, args.format)
-        result = diff_runs(before, after)
+        result = diff_runs(before, after, key=normalise_id if args.normalise_ids else None)
         _print_diff(result, args.json)
         if args.fail_on_broken and result.broken:
             return 1
