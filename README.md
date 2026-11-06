@@ -105,7 +105,7 @@ are portable. `fixtures/tap-nested.tap` is written by hand.
 ## Results
 
 Tests: `uv run pytest -q --cov=testlogs` gives 25 passed, 93 % line coverage
-(389 statements, 29 missed), 0.1 s. No real public data has been run through this
+(390 statements, 29 missed), 0.1 s. No real public data has been run through this
 version yet; that is the next stage.
 
 ## Limitations
