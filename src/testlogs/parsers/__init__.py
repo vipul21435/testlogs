@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from testlogs.clean import clean_lines, strip_ansi
-from testlogs.models import Run
+from testlogs.models import Run, plural
 from testlogs.parsers import (
     cargo,
     gotest,
@@ -71,8 +71,9 @@ def _check_total(run: Run) -> Run:
     """
     if run.summary_total is not None and run.summary_total != len(run.results):
         run.notes.append(
-            f"the log's summary counts {run.summary_total} tests; "
-            f"{len(run.results)} records were parsed"
+            f"the log's summary counts {plural(run.summary_total, 'test')}; "
+            f"{plural(len(run.results), 'record')} "
+            f"{'was' if len(run.results) == 1 else 'were'} parsed"
         )
     return run
 

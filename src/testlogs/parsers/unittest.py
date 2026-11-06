@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import re
 
-from testlogs.models import Run, Status, TestResult
+from testlogs.models import Run, Status, TestResult, plural
 
 _RESULTS = {
     "ok": Status.PASSED,
@@ -94,7 +94,8 @@ def parse(lines: list[str]) -> Run:
                 run.results.append(TestResult(pending[0], _status(m.group("result")), pending[1]))
                 pending = None
     if sub_failed:
-        run.notes.append(f"{len(sub_failed)} tests with failing subtests are recorded as failed")
+        n = len(sub_failed)
+        run.notes.append(f"{plural(n, 'test')} with failing subtests, recorded as failed")
     run.incomplete = not complete
     if run.incomplete:
         run.notes.append("no 'Ran N tests' line: the log is truncated or the run was interrupted")

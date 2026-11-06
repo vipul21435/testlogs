@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import re
 
-from testlogs.models import Run, Status, TestResult
+from testlogs.models import Run, Status, TestResult, plural
 
 _STATUS_WORDS = {
     "PASSED": Status.PASSED,
@@ -162,7 +162,8 @@ def parse(lines: list[str]) -> Run:
             complete = True
             in_summary = False
             for sc in _SUBTEST_COUNT.finditer(line):
-                run.notes.append(f"pytest counts {sc.group('n')} subtests {sc.group('what')}")
+                n = int(sc.group("n"))
+                run.notes.append(f"pytest counts {plural(n, 'subtest')} {sc.group('what')}")
             final_total = sum(
                 int(fc.group("n")) for fc in _FINAL_COUNT.finditer(line) if not fc.group("sub")
             )
@@ -236,12 +237,17 @@ def parse(lines: list[str]) -> Run:
     if subfailed:
         n = sum(subfailed.values())
         run.notes.append(
-            f"{n} failing subtests in {len(subfailed)} tests: those tests are recorded as failed"
+            f"{plural(n, 'failing subtest')} in {plural(len(subfailed), 'test')}: "
+            f"{'that test is' if len(subfailed) == 1 else 'those tests are'} recorded as failed"
         )
     run.results = [TestResult(i, status[i], _file_of(i), durations.get(i)) for i in order]
     if reruns:
         passed_late = [i for i in reruns if status.get(i) is Status.PASSED]
-        note = f"{len(reruns)} tests were rerun ({sum(reruns.values())} reruns)"
+        n_runs = sum(reruns.values())
+        note = (
+            f"{plural(len(reruns), 'test')} {'was' if len(reruns) == 1 else 'were'} rerun "
+            f"({plural(n_runs, 'rerun')})"
+        )
         if passed_late:
             note += f"; {len(passed_late)} passed only on a rerun: {', '.join(passed_late)}"
         run.notes.append(note)

@@ -7,6 +7,11 @@ from dataclasses import dataclass, field
 from typing import Any
 
 
+def plural(n: int, word: str, many: str | None = None) -> str:
+    """``"1 test"``, ``"2 tests"``: a count with its noun, for notes."""
+    return f"{n} {word if n == 1 else (many or word + 's')}"
+
+
 class Status(str, enum.Enum):
     PASSED = "passed"
     FAILED = "failed"

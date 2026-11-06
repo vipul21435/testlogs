@@ -92,3 +92,13 @@ def test_fail_on_incomplete_exit_code():
     before, after = str(FIX / "pytest-v-truncated.log"), str(FIX / "pytest-v-after.log")
     assert main(["diff", before, after, "--fail-on-incomplete"]) == 3
     assert main(["diff", after, after, "--fail-on-incomplete"]) == 0
+
+
+def test_notes_use_singular_for_one():
+    from testlogs.models import plural
+
+    assert plural(1, "test") == "1 test"
+    assert plural(0, "test") == "0 tests"
+    assert plural(2, "failing subtest") == "2 failing subtests"
+    run = parse("TAP version 13\n1..1\n", fmt="tap")
+    assert "plan says 1 test, found 0" in run.notes

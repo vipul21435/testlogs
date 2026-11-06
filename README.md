@@ -60,8 +60,8 @@ A cut-off log is reported incomplete, not guessed:
 $ testlogs parse fixtures/go-v-truncated.log
 passed  TestParse  0.010s
 -- go: 1 passed  (incomplete)
-   note: 1 results after the last package line
-   note: 1 tests started but never finished: TestRender
+   note: 1 result after the last package line
+   note: 1 test started but never finished: TestRender
 ```
 
 A failing subtest makes its test failed, in every format, and `--normalise-ids` lets
@@ -74,7 +74,7 @@ failed  fixtures/subtests_sample/test_subtests.py::Table::test_one_case_fails
 passed  fixtures/subtests_sample/test_subtests.py::Table::test_plain
 -- pytest: 2 passed, 1 failed
    note: pytest counts 5 subtests passed
-   note: 1 failing subtests in 1 tests: those tests are recorded as failed
+   note: 1 failing subtest in 1 test: that test is recorded as failed
 $ testlogs diff --normalise-ids fixtures/subtests-pytest-v.log fixtures/subtests-unittest-v.log
 fixed (failed -> passed): 0
 broken (passed -> failed): 0

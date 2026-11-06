@@ -90,4 +90,4 @@ def test_go_json_interleaved_packages_and_same_test_name():
         ("a::TestX", Status.PASSED, 0.1),
     ]
     cut = parse("\n".join(events[:-1]))
-    assert cut.incomplete and any("no final pass or fail event: b" in n for n in cut.notes)
+    assert cut.incomplete and any("without a final pass or fail event: b" in n for n in cut.notes)

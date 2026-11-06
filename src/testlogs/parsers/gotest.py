@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import re
 
-from testlogs.models import Run, Status, TestResult
+from testlogs.models import Run, Status, TestResult, plural
 
 _RUN = re.compile(r"^\s*=== RUN\s+(?P<name>\S+)\s*$")
 _END = re.compile(r"^\s*--- (?P<res>PASS|FAIL|SKIP): (?P<name>\S+) \((?P<secs>[\d.]+)s\)\s*$")
@@ -71,10 +71,10 @@ def parse(lines: list[str]) -> Run:
     if ended:
         run.results.extend(ended)
         run.incomplete = True
-        run.notes.append(f"{len(ended)} results after the last package line")
+        run.notes.append(f"{plural(len(ended), 'result')} after the last package line")
     if started:
         run.incomplete = True
-        run.notes.append(f"{len(started)} tests started but never finished: {started[0]}")
+        run.notes.append(f"{plural(len(started), 'test')} started but never finished: {started[0]}")
     if not run.results and not started:
         run.incomplete = True
         run.notes.append("no test results found")
@@ -116,15 +116,17 @@ def parse_json(lines: list[str]) -> Run:
             run.results.append(TestResult(tid, _ACTIONS[action], pkg, dur))
     if bad:
         run.incomplete = True
-        run.notes.append(f"{bad} lines are not JSON events")
+        run.notes.append(f"{plural(bad, 'line')} not a JSON event")
     if started:
         run.incomplete = True
-        run.notes.append(f"{len(started)} tests started but never finished")
+        run.notes.append(f"{plural(len(started), 'test')} started but never finished")
     if not run.results and not started and not bad:
         run.incomplete = True
         run.notes.append("no test events found")
     if open_packages:
         run.incomplete = True
         first = next(iter(open_packages))
-        run.notes.append(f"{len(open_packages)} packages have no final pass or fail event: {first}")
+        run.notes.append(
+            f"{plural(len(open_packages), 'package')} without a final pass or fail event: {first}"
+        )
     return run

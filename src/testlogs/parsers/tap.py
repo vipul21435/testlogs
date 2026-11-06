@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from testlogs.models import Run, Status, TestResult
+from testlogs.models import Run, Status, TestResult, plural
 
 _PLAN = re.compile(r"^(?P<indent>\s*)(?P<lo>\d+)\.\.(?P<hi>\d+)(?:\s*#.*)?$")
 # "ok 3 - name # SKIP reason". The description runs to the first unescaped "#":
@@ -67,7 +67,8 @@ def parse(lines: list[str]) -> Run:
             if lv.plan is not None and lv.plan != lv.points:
                 run.incomplete = True
                 run.notes.append(
-                    f"a subtest plan at indent {lv.indent} says {lv.plan} tests, found {lv.points}"
+                    f"a subtest plan at indent {lv.indent} says {plural(lv.plan, 'test')}, "
+                    f"found {lv.points}"
                 )
         return closed
 
@@ -171,7 +172,7 @@ def parse(lines: list[str]) -> Run:
         top = levels[0].points
         if top != expected:
             run.incomplete = True
-            run.notes.append(f"plan says {expected} tests, found {top}")
+            run.notes.append(f"plan says {plural(expected, 'test')}, found {top}")
         if plan_before_tests and not seen_test and expected > 0:
             run.incomplete = True
     return run
