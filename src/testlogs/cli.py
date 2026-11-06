@@ -48,24 +48,27 @@ def _print_run(run: Run, as_json: bool) -> None:
         print(f"   note: {note}")
 
 
-def _print_diff(d: RunDiff, as_json: bool) -> None:
+def _print_diff(d: RunDiff, as_json: bool, cross_format: bool = False) -> None:
     if as_json:
         print(json.dumps(d.to_dict(), indent=2))
         return
     sections = [
-        ("fixed (failed -> passed)", d.fixed),
-        ("broken (passed -> failed)", d.broken),
-        ("appeared", d.appeared),
-        ("vanished", d.vanished),
+        ("fixed (failed -> passed)", d.fixed, {}),
+        ("broken (passed -> failed)", d.broken, {}),
+        ("appeared", d.appeared, d.after_status),
+        ("vanished", d.vanished, d.before_status),
     ]
-    for title, ids in sections:
+    for title, ids, status in sections:
         print(f"{title}: {len(ids)}")
         for tid in ids:
-            print(f"  {tid}")
+            print(f"  {tid} ({status[tid]})" if tid in status else f"  {tid}")
     if d.changed:
         print(f"other changes: {len(d.changed)}")
         for tid, b, a in d.changed:
             print(f"  {tid}: {b} -> {a}")
+    # --normalise-ids exists to compare formats, so the warning is left out then.
+    if not cross_format and d.before_format != d.after_format:
+        print(f"warning: formats differ ({d.before_format} vs {d.after_format})")
     if d.before_incomplete:
         print("warning: BEFORE log is incomplete")
     if d.after_incomplete:
@@ -115,7 +118,7 @@ def main(argv: list[str] | None = None) -> int:
         before = _load(args.before, args.format, args.strip_prefix)
         after = _load(args.after, args.format, args.strip_prefix)
         result = diff_runs(before, after, key=normalise_id if args.normalise_ids else None)
-        _print_diff(result, args.json)
+        _print_diff(result, args.json, cross_format=args.normalise_ids)
         if args.fail_on_incomplete and (result.before_incomplete or result.after_incomplete):
             return 3
         if args.fail_on_broken and result.broken:

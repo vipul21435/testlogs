@@ -24,6 +24,14 @@ def _collapse(records: list[TestResult]) -> Status:
 
 @dataclass
 class RunDiff:
+    """The difference between two runs, by test id.
+
+    ``fixed`` went failed or error -> passed or xpass, ``broken`` the reverse;
+    ``appeared`` and ``vanished`` are ids on one side only, with their status in
+    ``after_status`` and ``before_status``; ``changed`` holds every other status
+    change as ``(id, before, after)``.
+    """
+
     fixed: list[str] = field(default_factory=list)  # failed -> passed
     broken: list[str] = field(default_factory=list)  # passed -> failed
     appeared: list[str] = field(default_factory=list)
@@ -31,6 +39,10 @@ class RunDiff:
     changed: list[tuple[str, str, str]] = field(default_factory=list)  # other changes
     before_incomplete: bool = False
     after_incomplete: bool = False
+    before_status: dict[str, str] = field(default_factory=dict)  # of vanished ids
+    after_status: dict[str, str] = field(default_factory=dict)  # of appeared ids
+    before_format: str = ""
+    after_format: str = ""
 
     def is_empty(self) -> bool:
         return not (self.fixed or self.broken or self.appeared or self.vanished or self.changed)
@@ -44,6 +56,10 @@ class RunDiff:
             "changed": [list(c) for c in self.changed],
             "before_incomplete": self.before_incomplete,
             "after_incomplete": self.after_incomplete,
+            "before_status": self.before_status,
+            "after_status": self.after_status,
+            "before_format": self.before_format,
+            "after_format": self.after_format,
         }
 
 
@@ -62,11 +78,18 @@ def diff_runs(before: Run, after: Run, key: Callable[[str], str] | None = None) 
     """
     b = _grouped(before, key)
     a = _grouped(after, key)
-    d = RunDiff(before_incomplete=before.incomplete, after_incomplete=after.incomplete)
+    d = RunDiff(
+        before_incomplete=before.incomplete,
+        after_incomplete=after.incomplete,
+        before_format=before.format,
+        after_format=after.format,
+    )
     for tid in sorted(set(a) - set(b)):
         d.appeared.append(tid)
+        d.after_status[tid] = a[tid].value
     for tid in sorted(set(b) - set(a)):
         d.vanished.append(tid)
+        d.before_status[tid] = b[tid].value
     for tid in sorted(set(a) & set(b)):
         sb, sa = b[tid], a[tid]
         if sb == sa:
