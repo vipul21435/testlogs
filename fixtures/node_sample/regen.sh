@@ -20,6 +20,9 @@ $M --reporter tap > $OUT/mocha-tap.log 2>&1
 N="node --test"
 $N --test-reporter=spec nodetest/maths.test.mjs nodetest/strings.test.mjs > $OUT/nodetest-spec.log 2>&1
 $N --test-reporter=tap nodetest/maths.test.mjs nodetest/strings.test.mjs > $OUT/nodetest-tap.log 2>&1
+# Names holding "#" and "\", which TAP 14 escapes as "\#" and "\\".
+$N --test-reporter=tap nodetest/escapes.test.mjs > $OUT/nodetest-tap-escapes.log 2>&1
+$N --test-reporter=spec nodetest/escapes.test.mjs > $OUT/nodetest-spec-escapes.log 2>&1
 # A colour run to exercise ANSI stripping on a node reporter.
 FORCE_COLOR=1 npx jest --config jest.config.json --verbose --colors > $OUT/jest-verbose-color.log 2>&1
 # Replace the checkout path and timing noise so the fixtures are portable.

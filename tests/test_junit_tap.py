@@ -67,3 +67,93 @@ def test_junit_other_producers_shapes():
         ("bare", "skipped", None),
         ("pkg::TestC", "error", None),
     ]
+
+
+def _yaml_duration(text: str, point: str) -> float:
+    """The duration_ms of the YAML block right after the test point line ``point``."""
+    lines = text.splitlines()
+    i = next(n for n, ln in enumerate(lines) if ln.strip() == point)
+    assert lines[i + 1].strip() == "---"
+    ms = lines[i + 2].split("duration_ms:")[1]
+    return float(ms) / 1000.0
+
+
+def test_tap_suite_duration_does_not_overwrite_last_child():
+    text = (FIX / "nodetest-tap.log").read_text()
+    run = parse(text)
+    by: dict[str, list[float | None]] = {}
+    for r in run.results:
+        by.setdefault(r.id, []).append(r.duration)
+    assert by["maths > add > fails on purpose"] == [
+        _yaml_duration(text, "not ok 3 - fails on purpose")
+    ]
+    assert by["maths > duplicate name"][1] == _yaml_duration(text, "ok 5 - duplicate name")
+
+
+def test_tap_escaped_hash_in_names_from_node_test():
+    text = (FIX / "nodetest-tap-escapes.log").read_text()
+    run = parse(text)
+    assert not run.incomplete, run.notes
+    assert [r.id for r in run.results] == [
+        "outer > plain",
+        "outer > issue #42 works",
+        "outer > back\\slash # and hash",
+        "outer > slow",
+        "top level #7",
+    ]
+    assert all(r.status is Status.PASSED for r in run.results)
+    slow = run.results[3].duration
+    assert slow == _yaml_duration(text, "ok 4 - slow")
+    spec = parse((FIX / "nodetest-spec-escapes.log").read_text())
+    assert [r.id for r in spec.results] == [r.id for r in run.results]
+
+
+def test_tap_comment_after_hash_is_not_a_directive():
+    run = parse("TAP version 14\n1..2\nok 1 - a # just a note\nnot ok 2 - b # todo later\n")
+    assert [(r.id, r.status) for r in run.results] == [("a", Status.PASSED), ("b", Status.XFAIL)]
+    assert not run.incomplete
+
+
+def test_tap_nested_plan_short_of_children_is_incomplete():
+    text = "\n".join(
+        [
+            "TAP version 14",
+            "# Subtest: outer",
+            "    1..3",
+            "    ok 1 - a",
+            "    ok 2 - b",
+            "ok 1 - outer",
+            "1..1",
+        ]
+    )
+    run = parse(text)
+    assert [r.id for r in run.results] == ["outer > a", "outer > b"]
+    assert run.incomplete
+    assert "says 3 tests, found 2" in run.notes[0]
+
+
+def test_tap_subtests_without_header_take_the_parent_name():
+    text = (
+        "TAP version 14\n    ok 1 - a\n    not ok 2 - b\n    1..2\n"
+        "not ok 1 - outer\nok 2 - c\n1..2\n"
+    )
+    run = parse(text)
+    assert [(r.id, r.status) for r in run.results] == [
+        ("outer > a", Status.PASSED),
+        ("outer > b", Status.FAILED),
+        ("c", Status.PASSED),
+    ]
+    assert not run.incomplete
+
+
+def test_tap_cut_inside_a_subtest_is_incomplete():
+    text = "TAP version 14\n# Subtest: outer\n    1..2\n    ok 1 - a\n"
+    run = parse(text)
+    assert run.incomplete
+
+
+def test_tap_yaml_block_lines_are_not_tests():
+    text = "TAP version 13\n1..1\nnot ok 1 - a\n  ---\n  message: |-\n    ok 2 - fake\n  ...\n"
+    run = parse(text)
+    assert [r.id for r in run.results] == ["a"]
+    assert not run.incomplete

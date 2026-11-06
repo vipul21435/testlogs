@@ -132,7 +132,8 @@ Both scripts replace the checkout path with `/work`, the home directory with
 4. **Completeness**. Each format has a line that closes the run: pytest's
    `=== N passed in Xs ===`, unittest's `Ran N tests`, jest's `Tests:`, vitest's
    `Tests ... (N)`, mocha's `N passing`, node:test's `ℹ tests N`, the TAP plan
-   (checked against the count of top-level test points, as TAP 14 asks), JUnit's
+   (checked against the count of top-level test points, as TAP 14 asks, and each
+   indented subtest plan against its own test points), JUnit's
    well-formed XML, cargo's `test result:` per binary, go's package line or package
    `pass`/`fail` event. Without it the run is `incomplete`. In go and cargo, a test
    that started and has no result line also makes the run incomplete.
@@ -162,7 +163,11 @@ Both scripts replace the checkout path with `/work`, the home directory with
    indented tree; a stack of `(indent, name)` pairs gives each test the id
    `file::outer > inner > name` (mocha's spec reporter prints no file, so its ids have
    none). node:test's closing `✔ suite` lines are recognised as summaries, not tests.
-   Duplicate names are kept as separate records.
+   Duplicate names are kept as separate records. In TAP, an `ok N - suite` line that
+   closes an indented block is the suite's summary, not a test, and the YAML
+   `duration_ms` under it is not given to its last child. Only an unescaped `#` starts
+   a `SKIP`/`TODO` directive or a comment; `\#` and `\\` in a name are read as `#`
+   and `\`, which is how node:test writes them.
 8. **JUnit XML**. Each `testcase` is a record with id `classname::name` and duration
    from `time`; the status comes from its `error`, `failure` or `skipped` child, and
    `<skipped type="pytest.xfail">` is read as xfail. Surefire's `flakyFailure` and

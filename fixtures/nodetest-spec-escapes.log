@@ -1,0 +1,15 @@
+▶ outer
+  ✔ plain (0.443334ms)
+  ✔ issue #42 works (0.05225ms)
+  ✔ back\slash # and hash (0.047ms)
+  ✔ slow (22.767792ms)
+✔ outer (24.037417ms)
+✔ top level #7 (0.091209ms)
+ℹ tests 5
+ℹ suites 1
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 104.124708
