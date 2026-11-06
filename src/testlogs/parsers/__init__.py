@@ -4,9 +4,47 @@ from __future__ import annotations
 
 from testlogs.clean import clean_lines, strip_ansi
 from testlogs.models import Run
-from testlogs.parsers import junit, pytest, tap
+from testlogs.parsers import (
+    cargo,
+    gotest,
+    jest,
+    jsjson,
+    junit,
+    mocha,
+    nodetest,
+    pytest,
+    tap,
+    unittest,
+    vitest,
+)
 
-FORMATS = ("pytest", "junit", "tap")
+FORMATS = (
+    "pytest",
+    "unittest",
+    "junit",
+    "tap",
+    "jest",
+    "jest-json",
+    "vitest",
+    "mocha",
+    "nodetest",
+    "go",
+    "go-json",
+    "cargo",
+)
+
+# Line-oriented parsers, tried in this order by detect_format.
+_LINE_PARSERS = (
+    ("pytest", pytest),
+    ("go", gotest),
+    ("cargo", cargo),
+    ("unittest", unittest),
+    ("jest", jest),
+    ("vitest", vitest),
+    ("nodetest", nodetest),
+    ("mocha", mocha),
+    ("tap", tap),
+)
 
 
 def detect_format(text: str) -> str | None:
@@ -14,11 +52,14 @@ def detect_format(text: str) -> str | None:
     plain = strip_ansi(text)
     if junit.looks_like(plain):
         return "junit"
+    if jsjson.looks_like(plain):
+        return "jest-json"
     lines = clean_lines(text)
-    if pytest.looks_like(lines):
-        return "pytest"
-    if tap.looks_like(lines):
-        return "tap"
+    if gotest.looks_like_json(lines):
+        return "go-json"
+    for name, mod in _LINE_PARSERS:
+        if mod.looks_like(lines):
+            return name
     return None
 
 
@@ -30,9 +71,12 @@ def parse(text: str, fmt: str | None = None) -> Run:
         raise ValueError("could not detect the log format; pass one of " + ", ".join(FORMATS))
     if fmt == "junit":
         return junit.parse(strip_ansi(text))
+    if fmt == "jest-json":
+        return jsjson.parse(strip_ansi(text))
     lines = clean_lines(text)
-    if fmt == "pytest":
-        return pytest.parse(lines)
-    if fmt == "tap":
-        return tap.parse(lines)
+    if fmt == "go-json":
+        return gotest.parse_json(lines)
+    for name, mod in _LINE_PARSERS:
+        if fmt == name:
+            return mod.parse(lines)
     raise ValueError(f"unknown format {fmt!r}; known: {', '.join(FORMATS)}")

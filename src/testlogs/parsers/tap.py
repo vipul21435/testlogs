@@ -76,8 +76,10 @@ def parse(lines: list[str]) -> Run:
                 and any(r.id.startswith(desc + " > ") for r in run.results)
             ):
                 continue
-            if m.group("num") and indent > 0 and any(
-                r.id.startswith(full + " > ") for r in run.results
+            if (
+                m.group("num")
+                and indent > 0
+                and any(r.id.startswith(full + " > ") for r in run.results)
             ):
                 continue
             ok = m.group("ok").lower() == "ok"
