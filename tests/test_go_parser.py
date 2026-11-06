@@ -91,3 +91,16 @@ def test_go_json_interleaved_packages_and_same_test_name():
     ]
     cut = parse("\n".join(events[:-1]))
     assert cut.incomplete and any("without a final pass or fail event: b" in n for n in cut.notes)
+
+
+def test_go_cached_package_line_closes_its_package():
+    # cmd/go prints "(cached)" in place of the elapsed time for a cached result.
+    text = (
+        "=== RUN   TestA\n--- PASS: TestA (0.00s)\nPASS\nok  \texample.com/a\t(cached)\n"
+        "=== RUN   TestB\n--- PASS: TestB (0.00s)\nPASS\nok  \texample.com/b\t0.012s\n"
+    )
+    run = parse(text)
+    assert not run.incomplete
+    assert [r.id for r in run.results] == ["example.com/a::TestA", "example.com/b::TestB"]
+    last = parse(text.split("=== RUN   TestB")[0])
+    assert not last.incomplete and [r.file for r in last.results] == ["example.com/a"]

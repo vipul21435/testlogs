@@ -19,7 +19,10 @@ from testlogs.models import Run, Status, TestResult, plural
 
 _RUN = re.compile(r"^\s*=== RUN\s+(?P<name>\S+)\s*$")
 _END = re.compile(r"^\s*--- (?P<res>PASS|FAIL|SKIP): (?P<name>\S+) \((?P<secs>[\d.]+)s\)\s*$")
-_PKG = re.compile(r"^(?:ok|FAIL|\?)\s+(?P<pkg>\S+)\s+(?:(?P<secs>[\d.]+)s|\[.*\])")
+# The time field is "0.1s", "(cached)" for a cached result, or "[no test files]".
+_PKG = re.compile(
+    r"^(?:ok|FAIL|\?)\s+(?P<pkg>\S+)\s+(?:(?P<secs>[\d.]+)s|\(cached\)|\[[^\]]*\])"
+)
 _ACTIONS = {"pass": Status.PASSED, "fail": Status.FAILED, "skip": Status.SKIPPED}
 _STATUS = {"PASS": Status.PASSED, "FAIL": Status.FAILED, "SKIP": Status.SKIPPED}
 
