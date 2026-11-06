@@ -262,8 +262,8 @@ read as a complete, smaller run. The test suite also cuts 14 fixture logs at eve
 before their closing line (565 cuts) and checks each is incomplete
 (`tests/test_truncation.py`).
 
-Tests: `uv run pytest -q --cov=testlogs` gives 125 passed and 97 % line coverage
-(1013 statements, 32 missed) in 0.38 s; the same suite passes on Python 3.10.
+Tests: `uv run pytest -q --cov=testlogs` gives 135 passed and 97 % line coverage
+(1102 statements, 32 missed) in 0.32 s; the same suite passes on Python 3.10.20.
 
 ## Limitations
 
@@ -290,6 +290,11 @@ Tests: `uv run pytest -q --cov=testlogs` gives 125 passed and 97 % line coverage
   the parser keeps whatever the log says. `normalise_id` does not undo the escaping.
 - pytest writes an unexpected pass (xpass) to JUnit XML as a plain pass, so a JUnit
   record says `passed` where the `-v` log says `xpass`.
+- A pytest summary row with no matching verbose line (a `-q -rA` log) has its id cut at
+  the first ` - ` outside brackets, so a parameter id like `x] - y`, with a stray `]`
+  before the ` - `, is still cut short there.
+- A TAP subtest block without its own `1..N` plan is checked only through its parent:
+  a missing child line goes unnoticed if the parent's result line is present.
 - unittest `file` is the dotted module, not a path; for a doctest it is the module the
   docstring lives in.
 - Detection is heuristic; pass `--format` for a log it cannot place. Logs that mix two
