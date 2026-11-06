@@ -102,3 +102,15 @@ def test_notes_use_singular_for_one():
     assert plural(2, "failing subtest") == "2 failing subtests"
     run = parse("TAP version 13\n1..1\n", fmt="tap")
     assert "plan says 1 test, found 0" in run.notes
+
+
+def test_version_flag(capsys):
+    import pytest
+
+    from testlogs import __version__
+    from testlogs.cli import main as cli_main
+
+    with pytest.raises(SystemExit) as exc:
+        cli_main(["--version"])
+    assert exc.value.code == 0
+    assert capsys.readouterr().out.strip() == f"testlogs {__version__}"

@@ -13,6 +13,10 @@ def plural(n: int, word: str, many: str | None = None) -> str:
 
 
 class Status(str, enum.Enum):
+    """A test's outcome. ``error`` is a failure outside the test body (setup,
+    teardown, a file that fails to load); ``xfail`` and ``xpass`` are an expected
+    failure that failed and one that passed."""
+
     PASSED = "passed"
     FAILED = "failed"
     SKIPPED = "skipped"

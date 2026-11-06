@@ -7,6 +7,7 @@ import json
 import sys
 from pathlib import Path
 
+from testlogs import __version__
 from testlogs.diff import RunDiff, diff_runs
 from testlogs.ids import normalise_id
 from testlogs.models import Run
@@ -85,6 +86,7 @@ _DESCRIPTION = (
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="testlogs", description=_DESCRIPTION)
+    ap.add_argument("--version", action="version", version=f"testlogs {__version__}")
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("parse", help="list per-test results from one log")
     p.add_argument("log", help="log file, or - for stdin")
