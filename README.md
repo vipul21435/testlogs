@@ -144,7 +144,10 @@ Both scripts replace the checkout path with `/work`, the home directory with
    id is found by counting brackets, so `[with space]` stays inside it. xdist's
    `[gw1] [ 42%] PASSED id` lines are read in whatever order the workers finish. When
    an `-rA` short summary is present its rows override the verbose status, because a
-   verbose line can be split by captured output and a summary row cannot.
+   verbose line can be split by captured output and a summary row cannot. A parameter
+   id can itself hold ` - `, so a summary row's id is the longest id already seen on a
+   verbose line, or else ends at the first ` - ` outside brackets (`test_p[a - b]`,
+   `test_p[c]d]` and `test_p[q [ 5%]]` are in the fixtures).
    `SUBFAILED(...) id` rows mark their parent failed; `--durations` tables fill
    `duration`. pytest-rerunfailures' `id RERUN` lines are counted, not recorded: the
    test's last status is its record, and a note names every test that passed only on
