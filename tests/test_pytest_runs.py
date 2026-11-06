@@ -42,7 +42,8 @@ def test_xdist_and_bare_status_reasons_holding_parentheses():
         "a.py::test_t output\nXFAIL (bug (see #1))\n"
         "[gw1] [100%] PASSED a.py::test_u[x (y)]\n"
         "[gw1] [100%] SKIPPED a.py::test_v[x (y)] (needs (z))\n"
-        "==== 1 passed, 2 skipped, 1 xfailed in 0.01s ====\n"
+        "[gw0] [100%] SKIPPED a.py::test_w[  (x) (x)] \\]\n"
+        "==== 1 passed, 3 skipped, 1 xfailed in 0.01s ====\n"
     )
     run = _run_text(text)
     assert [(r.id, r.status.value) for r in run.results] == [
@@ -50,6 +51,7 @@ def test_xdist_and_bare_status_reasons_holding_parentheses():
         ("a.py::test_t", "xfail"),
         ("a.py::test_u[x (y)]", "passed"),
         ("a.py::test_v[x (y)]", "skipped"),
+        ("a.py::test_w[  (x) (x)] \\]", "skipped"),
     ]
 
 

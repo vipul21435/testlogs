@@ -300,11 +300,11 @@ def parse(lines: list[str]) -> Run:
         m = _XDIST.match(line) or _VERBOSE.match(line)
         if m:
             tid = m.group("id")
-            if m.re is _XDIST and tid.count("[") != tid.count("]"):
+            if m.re is _XDIST and m.group("reason") is not None and tid.count("[") > tid.count("]"):
                 # "[gw0] ... SKIPPED a.py::t[x (y)] (reason)": the lazy id stopped
                 # inside the brackets; take the id up to the first space outside them.
                 whole = _leading_node_id(line[m.start("id") :])
-                if whole is not None and whole.count("[") == whole.count("]"):
+                if whole is not None and len(whole) > len(tid) and "[" in tid:
                     tid = whole
             verbose.append(TestResult(tid, _STATUS_WORDS[m.group("status")], _file_of(tid)))
             known.add(tid)
