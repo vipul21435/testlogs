@@ -76,6 +76,19 @@ def main() -> None:
             f"other {len(d.changed)}"
         )
 
+    js = args.data_dir / "logs" / "js"
+    if (js / "mocha-spec.log").exists():
+        spec = parse((js / "mocha-spec.log").read_text(encoding="utf-8"))
+        tap = parse((js / "mocha-tap.log").read_text(encoding="utf-8"))
+        # mocha's TAP reporter joins suite and test titles with a space, spec with " > ".
+        d = diff_runs(spec, tap, key=lambda i: i.replace(" > ", " "))
+        print(
+            f"\nbytes.js: mocha spec {len(spec.results)} records ({spec.format}, "
+            f"summary {spec.summary_total}), mocha TAP {len(tap.results)} records ({tap.format}); "
+            f"diff: appeared {len(d.appeared)}, vanished {len(d.vanished)}, "
+            f"changed {len(d.changed) + len(d.fixed) + len(d.broken)}"
+        )
+
     rng = random.Random(args.seed)
     print(f"\nTruncation: {args.cuts} cuts per log at random byte offsets:")
     for name, text in texts.items():

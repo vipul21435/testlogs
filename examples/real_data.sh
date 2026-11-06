@@ -4,6 +4,7 @@
 # Usage: bash examples/real_data.sh DATA_DIR
 set -u
 DATA="${1:?usage: real_data.sh DATA_DIR}"
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
 mkdir -p "$DATA/logs/old"
 cd "$DATA"
 [ -d more-itertools ] || git clone -q --depth 1 https://github.com/more-itertools/more-itertools.git
@@ -24,7 +25,17 @@ git fetch -q --depth 1 origin tag "$OLD"
 [ -d "../more-itertools-$OLD" ] || git worktree add -q "../more-itertools-$OLD" "$OLD"
 (cd "../more-itertools-$OLD" && PYTHONPATH=. "$ROOT/$PY" -m pytest -p no:cacheprovider --color=no \
   -v tests > ../logs/old/pytest-v.log 2>&1)
-for f in ../logs/*.log ../logs/*.xml ../logs/old/*.log; do
+# A small JS suite, bytes.js (MIT), under the mocha installed in fixtures/node_sample
+# (run "npm install" there first). Its tests need no other package.
+MOCHA="$REPO/fixtures/node_sample/node_modules/.bin/mocha"
+if [ -x "$MOCHA" ]; then
+  mkdir -p ../logs/js
+  [ -d ../bytes.js ] || git clone -q --depth 1 https://github.com/visionmedia/bytes.js.git ../bytes.js
+  (cd ../bytes.js && git log -1 --format='bytes.js commit %H' >> ../logs/SOURCE \
+    && NO_COLOR=1 "$MOCHA" --check-leaks --reporter spec > ../logs/js/mocha-spec.log 2>&1
+    "$MOCHA" --check-leaks --reporter tap > ../logs/js/mocha-tap.log 2>&1)
+fi
+for f in ../logs/*.log ../logs/*.xml ../logs/old/*.log ../logs/js/*.log; do
   sed -i.bak -e "s#$ROOT-$OLD#/work#g" -e "s#$ROOT#/work#g" -e "s#$HOME#/home/user#g" -e 's/hostname="[^"]*"/hostname="localhost"/g' "$f" && rm "$f.bak"
 done
 ls -l ../logs
