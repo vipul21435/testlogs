@@ -398,8 +398,7 @@ passes on Python 3.10.20
 
 - [reporewind](https://github.com/vipul21435/reporewind): resolve Python fix commits into source and test patches.
 - [graderguard](https://github.com/vipul21435/graderguard): audit graders for reward hacking and flakiness.
-- [taskledger](https://github.com/vipul21435/taskledger): schema validation and lint rules for benchmark-task bundles.
-- [commitminer](https://github.com/vipul21435/commitminer): mine and rank candidate tasks from repository history.
+- [patchsim](https://github.com/vipul21435/patchsim): how far textual similarity to a reference patch goes as a proxy for correctness, checked against test outcomes.
 
 Other public tools for parts of this job:
 [junitparser](https://pypi.org/project/junitparser/) reads and merges JUnit XML;
