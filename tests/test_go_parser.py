@@ -69,3 +69,25 @@ def test_go_parallel_pause_cont_lines_are_ignored():
         ("example.com/p::TestB", Status.PASSED),
         ("example.com/p::TestA", Status.FAILED),
     ]
+
+
+def test_go_json_interleaved_packages_and_same_test_name():
+    events = [
+        '{"Action":"start","Package":"a"}',
+        '{"Action":"start","Package":"b"}',
+        '{"Action":"run","Package":"a","Test":"TestX"}',
+        '{"Action":"run","Package":"b","Test":"TestX"}',
+        '{"Action":"output","Package":"b","Test":"TestX","Output":"--- FAIL\\n"}',
+        '{"Action":"fail","Package":"b","Test":"TestX","Elapsed":0.2}',
+        '{"Action":"pass","Package":"a","Test":"TestX","Elapsed":0.1}',
+        '{"Action":"pass","Package":"a","Elapsed":0.3}',
+        '{"Action":"fail","Package":"b","Elapsed":0.4}',
+    ]
+    run = parse("\n".join(events))
+    assert not run.incomplete
+    assert [(r.id, r.status, r.duration) for r in run.results] == [
+        ("b::TestX", Status.FAILED, 0.2),
+        ("a::TestX", Status.PASSED, 0.1),
+    ]
+    cut = parse("\n".join(events[:-1]))
+    assert cut.incomplete and any("no final pass or fail event: b" in n for n in cut.notes)
