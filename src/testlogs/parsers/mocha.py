@@ -15,8 +15,10 @@ from testlogs.models import Run, Status, TestResult
 _LEAF = re.compile(
     r"^(?P<indent>\s*)(?P<mark>✔|✓|-|\d+\))\s+(?P<name>.*?)(?:\s+\((?P<ms>\d+)ms\))?$"
 )
-_PASSING = re.compile(r"^\s*\d+ passing \([\d.]+ ?m?s\)$")
+# mocha formats the run time with ms(): "12ms", "1s", "1m", "2h", "1d".
+_PASSING = re.compile(r"^\s*\d+ passing \(\d+(?:\.\d+)?\s?(?:ms|s|m|h|d)\)$")
 _COUNT = re.compile(r"^\s*(?P<n>\d+) (?:passing \(.*\)|pending|failing)$")
+_TAIL_COUNT = re.compile(r"^\s*\d+ (?:pending|failing)$")
 
 
 def looks_like(lines: list[str]) -> bool:
@@ -54,6 +56,8 @@ def parse(lines: list[str]) -> Run:
                     total += int(m.group("n"))
             run.summary_total = total
             break
+        if _TAIL_COUNT.match(line):
+            break  # "N failing" without a passing line: the summary was cut
         if not line.strip():
             prev_blank = True
             continue

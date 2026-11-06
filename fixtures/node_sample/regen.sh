@@ -20,10 +20,12 @@ $V --reporter=json --outputFile=$OUT/vitest-report.json > /dev/null 2>&1
 M="npx mocha mocha/maths.spec.js mocha/strings.spec.js"
 $M --reporter spec > $OUT/mocha-spec.log 2>&1
 $M --reporter tap > $OUT/mocha-tap.log 2>&1
-# Output mixed into the spec tree (see mocha-edge/edge.spec.js) and the same file run through
-# "npm run", whose "> name@version script" banner comes first.
+# Output mixed into the spec tree (see mocha-edge/edge.spec.js), the same file run through
+# "npm run", whose "> name@version script" banner comes first, and a run over a minute
+# (slow.spec.js waits 61 s), which mocha's summary prints as "(1m)".
 npx mocha mocha-edge/edge.spec.js --reporter spec > $OUT/mocha-spec-edge.log 2>&1
 npm run mocha-edge > $OUT/mocha-spec-npm.log 2>&1
+npx mocha mocha-edge/slow.spec.js mocha-edge/edge.spec.js --reporter spec > $OUT/mocha-spec-slow.log 2>&1
 N="node --test"
 $N --test-reporter=spec nodetest/maths.test.mjs nodetest/strings.test.mjs > $OUT/nodetest-spec.log 2>&1
 $N --test-reporter=tap nodetest/maths.test.mjs nodetest/strings.test.mjs > $OUT/nodetest-tap.log 2>&1

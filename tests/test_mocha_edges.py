@@ -36,3 +36,19 @@ def test_npm_banner_is_not_a_describe_title():
     plain = parse((FIX / "mocha-spec-edge.log").read_text(), fmt="mocha")
     d = diff_runs(plain, run)
     assert d.appeared == [] and d.vanished == []
+
+
+def test_run_over_a_minute_is_detected_and_details_are_not_tests():
+    text = (FIX / "mocha-spec-slow.log").read_text()
+    assert "6 passing (1m)" in text
+    assert detect_format(text) == "mocha"
+    run = parse(text)
+    assert not run.incomplete and run.summary_total == 8
+    assert [r.id for r in run.results] == ["slow > waits 61 seconds"] + [i for i, _ in EXPECTED]
+    assert sum(r.status.value == "failed" for r in run.results) == 1
+
+
+def test_failure_details_after_a_cut_summary_are_not_tests():
+    text = (FIX / "mocha-spec-slow.log").read_text().replace("6 passing (1m)\n", "")
+    run = parse(text, fmt="mocha")
+    assert run.incomplete and len(run.results) == 8
