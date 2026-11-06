@@ -378,7 +378,10 @@ passes on Python 3.10.20
   and TAP lines look like a describe block's, so it gets no record; the summary-count
   note shows the gap.
 - mocha's tree is read by indentation: printed output at a test's own indent with
-  deeper lines after it could still be taken for a describe title.
+  deeper lines after it could still be taken for a describe title. A printed line
+  with the run's own check mark (`✔` for mocha 10) at a test's indent is read as a
+  test; one with the other mark (`✓`) is dropped, and the summary-count note shows
+  any gap left.
 - A TAP subtest block without its own `1..N` plan is checked only through its parent:
   a missing child line goes unnoticed if the parent's result line is present.
 - unittest `file` is the dotted module, not a path; for a doctest it is the module the

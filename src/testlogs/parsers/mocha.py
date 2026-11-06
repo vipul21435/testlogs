@@ -3,14 +3,16 @@
 Describe names stand on their own lines; a test is ``✔ name`` (or ``✓``), a
 failure ``N) name`` and a pending test ``- name``, each indented two spaces per
 level. The run ends with ``N passing (Xms)`` and optional pending/failing
-counts; the failure details that follow are not parsed.
+counts; the failure details that follow are not parsed. A run uses one of the
+two check marks; when a log holds both, the one whose count matches ``N passing``
+(else the more frequent one) is the reporter's and lines with the other are output.
 """
 
 from __future__ import annotations
 
 import re
 
-from testlogs.models import Run, Status, TestResult
+from testlogs.models import Run, Status, TestResult, plural
 
 _LEAF = re.compile(
     r"^(?P<indent>\s*)(?P<mark>✔|✓|-|\d+\))\s+(?P<name>.*?)(?:\s+\((?P<ms>\d+)ms\))?$"
@@ -39,8 +41,29 @@ def _next_indent(lines: list[str], i: int) -> int:
     return -1
 
 
+def _foreign_mark(lines: list[str]) -> str | None:
+    """The check mark that is not this run's, when the log holds both."""
+    counts = {"✔": 0, "✓": 0}
+    passing = None
+    for raw in lines:
+        line = raw.rstrip()
+        m = _LEAF.match(line)
+        if m and m.group("mark") in counts:
+            counts[m.group("mark")] += 1
+        if passing is None and _PASSING.match(line):
+            passing = int(line.split()[0])
+    if not counts["✔"] or not counts["✓"]:
+        return None
+    for mark, other in (("✔", "✓"), ("✓", "✔")):
+        if counts[mark] == passing and counts[other] != passing:
+            return other
+    return "✓" if counts["✔"] >= counts["✓"] else "✔"
+
+
 def parse(lines: list[str]) -> Run:
     run = Run(format="mocha")
+    foreign = _foreign_mark(lines)
+    ignored = 0
     stack: list[tuple[int, str]] = []
     complete = False
     prev_blank = True
@@ -65,6 +88,9 @@ def parse(lines: list[str]) -> Run:
         after_leaf, prev_leaf = prev_leaf, -1
         indent = _indent(line)
         m = _LEAF.match(line)
+        if m and m.group("mark") == foreign:
+            ignored += 1
+            continue
         # "- title" is a pending test unless deeper lines follow it: then it is a
         # describe whose title starts with "- ".
         if m and not (m.group("mark") == "-" and _next_indent(lines, i) > indent):
@@ -98,6 +124,10 @@ def parse(lines: list[str]) -> Run:
             while stack and stack[-1][0] >= indent:
                 stack.pop()
             stack.append((indent, line.strip()))
+    if ignored:
+        run.notes.append(
+            f"{plural(ignored, 'printed line')} with the other check mark ({foreign}) ignored"
+        )
     run.incomplete = not complete
     if run.incomplete:
         run.notes.append("no 'N passing' line: the log is truncated or the run was interrupted")

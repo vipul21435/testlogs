@@ -40,6 +40,8 @@ $M --reporter tap > $OUT/mocha-tap.log 2>&1
 npx mocha mocha-edge/edge.spec.js --reporter spec > $OUT/mocha-spec-edge.log 2>&1
 npm run mocha-edge > $OUT/mocha-spec-npm.log 2>&1
 npx mocha mocha-edge/slow.spec.js mocha-edge/edge.spec.js --reporter spec > $OUT/mocha-spec-slow.log 2>&1
+# A test that prints "    ✓ not a test" at a test's indent; mocha 10 marks passes with ✔.
+npx mocha mocha-print/print.spec.js --reporter spec > $OUT/mocha-spec-print.log 2>&1
 N="node --test"
 $N --test-reporter=spec nodetest/maths.test.mjs nodetest/strings.test.mjs > $OUT/nodetest-spec.log 2>&1
 $N --test-reporter=tap nodetest/maths.test.mjs nodetest/strings.test.mjs > $OUT/nodetest-tap.log 2>&1

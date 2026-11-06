@@ -52,3 +52,15 @@ def test_failure_details_after_a_cut_summary_are_not_tests():
     text = (FIX / "mocha-spec-slow.log").read_text().replace("6 passing (1m)\n", "")
     run = parse(text, fmt="mocha")
     assert run.incomplete and len(run.results) == 8
+
+
+def test_printed_line_with_the_other_check_mark_is_not_a_test():
+    # mocha 10 prints passes with ✔ (U+2714); a printed ✓ (U+2713) line at a test's
+    # indent is output, told apart by the "N passing" count.
+    run = parse((FIX / "mocha-spec-print.log").read_text(encoding="utf-8"), fmt="mocha")
+    assert [(r.id, r.status.value) for r in run.results] == [
+        ("Outer > prints a check mark", "passed"),
+        ("Outer > plain", "passed"),
+    ]
+    assert "1 printed line with the other check mark (✓) ignored" in run.notes
+    assert not [n for n in run.notes if "summary counts" in n]
