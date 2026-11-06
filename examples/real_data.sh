@@ -9,8 +9,13 @@ DATA="${1:?usage: real_data.sh DATA_DIR}"
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 mkdir -p "$DATA/logs/old"
 cd "$DATA"
+# The README's numbers are for these commits; the clones are pinned to them.
+MI_COMMIT=f42daddf205f335fea6e200dad46049f33e71221
+BYTES_COMMIT=9ddc13b6c66e0cb293616fba246e05db4b6cef4d
 [ -d more-itertools ] || git clone -q --depth 1 https://github.com/more-itertools/more-itertools.git
 cd more-itertools
+git fetch -q --depth 1 origin "$MI_COMMIT"
+git checkout -q "$MI_COMMIT"
 git log -1 --format='more-itertools commit %H' > ../logs/SOURCE
 [ -x .venv/bin/python ] || uv venv -q --python 3.12 .venv
 uv pip install -q --python .venv/bin/python -e . pytest
@@ -38,6 +43,8 @@ if [ -x "$MOCHA" ]; then
   [ -d ../bytes.js ] || git clone -q --depth 1 https://github.com/visionmedia/bytes.js.git ../bytes.js
   (
     cd ../bytes.js
+    git fetch -q --depth 1 origin "$BYTES_COMMIT"
+    git checkout -q "$BYTES_COMMIT"
     git log -1 --format='bytes.js commit %H' >> ../logs/SOURCE
     NO_COLOR=1 "$MOCHA" --check-leaks --reporter spec > ../logs/js/mocha-spec.log 2>&1 || true
     "$MOCHA" --check-leaks --reporter tap > ../logs/js/mocha-tap.log 2>&1 || true
