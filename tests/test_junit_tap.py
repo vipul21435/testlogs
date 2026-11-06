@@ -206,3 +206,10 @@ def test_vitest_tap_empty_block_keeps_its_point():
         ("b.test.ts > t", Status.PASSED),
     ]
     assert not run.incomplete
+
+
+def test_tap_name_ending_in_brace_is_still_a_test():
+    text = "TAP version 13\n1..2\nok 1 - parses {\nok 2 - parses }\n"
+    run = parse(text)
+    assert [r.id for r in run.results] == ["parses {", "parses }"]
+    assert not run.incomplete

@@ -83,7 +83,15 @@ def parse(lines: list[str]) -> Run:
             levels.append(_Level(indent, len(run.results)))
         return levels[-1]
 
-    for raw in lines:
+    def opens_block_at(k: int, indent: int) -> bool:
+        """A point ending in "{" opens a block only if what follows is indented under
+        it, or is its closing "}"; otherwise the "{" is part of the test's name."""
+        for nxt in lines[k + 1 :]:
+            if nxt.strip():
+                return _indent(nxt) > indent or (nxt.strip() == "}" and _indent(nxt) == indent)
+        return True  # cut right after the opening line: the block is open
+
+    for k, raw in enumerate(lines):
         line = raw.rstrip()
         if yaml_indent is not None:
             if line.strip() == "..." and _indent(line) == yaml_indent:
@@ -139,7 +147,7 @@ def parse(lines: list[str]) -> Run:
                 lo, hi = int(m.group("lo")), int(m.group("hi"))
                 level_at(indent).plan = hi - lo + 1 if hi >= lo else 0
             continue
-        opens_block = line.endswith("{")
+        opens_block = line.endswith("{") and opens_block_at(k, _indent(line))
         m = _TEST.match(line[:-1].rstrip() if opens_block else line)
         if not m:
             last = None
