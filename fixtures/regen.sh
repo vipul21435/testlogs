@@ -36,6 +36,8 @@ $P -v $T > fixtures/subtests-pytest-v.log 2>&1
 $P -v -rA $T > fixtures/subtests-pytest-rA.log 2>&1
 $P -q --junitxml=fixtures/subtests-junit.xml $T > /dev/null 2>&1
 $U fixtures.subtests_sample.test_subtests > fixtures/subtests-unittest-v.log 2>&1
+# pytest's own subtests fixture: the parent is reported FAILED as well.
+$P -v fixtures/subtests_sample/test_fixture_subtests.py > fixtures/subtests-fixture-pytest-v.log 2>&1
 
 # Replace the machine's checkout path and host name so fixtures are portable.
 for f in fixtures/*.log fixtures/*.xml; do

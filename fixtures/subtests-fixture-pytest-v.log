@@ -1,0 +1,46 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.2.0, pluggy-1.7.0 -- /work/.venv/bin/python3
+rootdir: /work
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 2 items
+
+fixtures/subtests_sample/test_fixture_subtests.py::test_fixture_cases SUBPASSED[case] (i=0) [ 50%]
+fixtures/subtests_sample/test_fixture_subtests.py::test_fixture_cases SUBFAILED[case] (i=1) [ 50%]
+fixtures/subtests_sample/test_fixture_subtests.py::test_fixture_cases SUBPASSED[case] (i=2) [ 50%]
+fixtures/subtests_sample/test_fixture_subtests.py::test_fixture_cases SUBFAILED[case] (i=3) [ 50%]
+fixtures/subtests_sample/test_fixture_subtests.py::test_fixture_cases FAILED [ 50%]
+fixtures/subtests_sample/test_fixture_subtests.py::test_fixture_all_pass SUBPASSED(i=0) [100%]
+fixtures/subtests_sample/test_fixture_subtests.py::test_fixture_all_pass SUBPASSED(i=1) [100%]
+fixtures/subtests_sample/test_fixture_subtests.py::test_fixture_all_pass PASSED [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_fixture_cases [case] (i=1) ________________________
+
+subtests = <_pytest.subtests.Subtests object at 0x10ac61940>
+
+    def test_fixture_cases(subtests):
+        for i in range(4):
+            with subtests.test(msg="case", i=i):
+>               assert i % 2 == 0
+E               assert (1 % 2) == 0
+
+fixtures/subtests_sample/test_fixture_subtests.py:7: AssertionError
+_______________________ test_fixture_cases [case] (i=3) ________________________
+
+subtests = <_pytest.subtests.Subtests object at 0x10ac61940>
+
+    def test_fixture_cases(subtests):
+        for i in range(4):
+            with subtests.test(msg="case", i=i):
+>               assert i % 2 == 0
+E               assert (3 % 2) == 0
+
+fixtures/subtests_sample/test_fixture_subtests.py:7: AssertionError
+______________________________ test_fixture_cases ______________________________
+contains 2 failed subtests
+=========================== short test summary info ============================
+SUBFAILED[case] (i=1) fixtures/subtests_sample/test_fixture_subtests.py::test_fixture_cases
+SUBFAILED[case] (i=3) fixtures/subtests_sample/test_fixture_subtests.py::test_fixture_cases
+FAILED fixtures/subtests_sample/test_fixture_subtests.py::test_fixture_cases
+================ 3 failed, 1 passed, 4 subtests passed in 0.02s ================

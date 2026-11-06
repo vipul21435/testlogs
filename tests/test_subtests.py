@@ -45,3 +45,23 @@ def test_unittest_parent_line_without_result_is_not_lost():
         ("m.T.test_a", Status.FAILED),
         ("m.T.test_b", Status.PASSED),
     ]
+
+
+def test_pytest_subtests_fixture_parent_failed_and_counts_agree():
+    run = parse((FIX / "subtests-fixture-pytest-v.log").read_text(encoding="utf-8"))
+    by = {r.id.rsplit("::", 1)[1]: r.status for r in run.results}
+    assert by == {"test_fixture_cases": Status.FAILED, "test_fixture_all_pass": Status.PASSED}
+    # "3 failed, 1 passed" counts two failing subtests on top of their parent.
+    assert run.summary_total == 2
+    assert not [n for n in run.notes if "summary counts" in n]
+
+
+def test_subtest_summary_row_shapes():
+    text = (
+        "t/test_a.py::test_x PASSED [100%]\n"
+        "=========================== short test summary info ============================\n"
+        "SUBFAILED[msg] (i=1) t/test_a.py::test_x - assert False\n"
+        "============== 1 failed, 1 passed in 0.01s ==============\n"
+    )
+    run = parse(text, fmt="pytest")
+    assert [(r.id, r.status) for r in run.results] == [("t/test_a.py::test_x", Status.FAILED)]

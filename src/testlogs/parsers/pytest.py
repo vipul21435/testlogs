@@ -50,7 +50,7 @@ _BARE_STATUS = re.compile(
     r"^(?P<status>PASSED|FAILED|SKIPPED|ERROR|XFAIL|XPASS)(?:\s+\([^)]*\))?(?:\s+\[\s*\d+%\])?$"
 )
 _SUBTEST = re.compile(
-    r"^SUB(?P<status>FAILED|PASSED|SKIPPED)\((?P<params>.*?)\)\s+"
+    r"^SUB(?P<status>FAILED|PASSED|SKIPPED)(?:\[[^\]]*\])?\s*(?:\((?P<params>.*?)\))?\s+"
     r"(?P<id>[^\s:]+::.*?)(?:\s+-\s+.*)?$"
 )
 _SUBTEST_COUNT = re.compile(r"(?P<n>\d+) subtests? (?P<what>passed|failed|skipped)")
