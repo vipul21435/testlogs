@@ -66,21 +66,26 @@ def _print_diff(d: RunDiff, as_json: bool) -> None:
 
 
 _STRIP_HELP = "remove PREFIX from the start of ids and files (repeatable)"
+_DESCRIPTION = (
+    "Turn a test runner's log into per-test results (testlogs parse LOG), or compare "
+    "two logs and list the tests that were fixed, broke, appeared or vanished "
+    "(testlogs diff BEFORE AFTER). The log format is detected unless --format is given."
+)
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(prog="testlogs", description=__doc__)
+    ap = argparse.ArgumentParser(prog="testlogs", description=_DESCRIPTION)
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("parse", help="list per-test results from one log")
     p.add_argument("log", help="log file, or - for stdin")
-    p.add_argument("--format", choices=FORMATS, default=None)
-    p.add_argument("--json", action="store_true")
+    p.add_argument("--format", choices=FORMATS, default=None, help="skip format detection")
+    p.add_argument("--json", action="store_true", help="print the run as JSON")
     p.add_argument("--strip-prefix", action="append", metavar="PREFIX", help=_STRIP_HELP)
     d = sub.add_parser("diff", help="compare two logs")
-    d.add_argument("before")
-    d.add_argument("after")
+    d.add_argument("before", help="the earlier log file, or - for stdin")
+    d.add_argument("after", help="the later log file, or - for stdin")
     d.add_argument("--format", choices=FORMATS, default=None, help="apply to both logs")
-    d.add_argument("--json", action="store_true")
+    d.add_argument("--json", action="store_true", help="print the diff as JSON")
     d.add_argument("--strip-prefix", action="append", metavar="PREFIX", help=_STRIP_HELP)
     d.add_argument(
         "--fail-on-incomplete",
