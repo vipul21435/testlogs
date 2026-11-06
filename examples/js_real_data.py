@@ -114,6 +114,11 @@ def _median_ms(text: str, repeats: int) -> float:
     return statistics.median(times) * 1000
 
 
+def _line_count(text: str) -> int:
+    """Lines as an editor counts them: a last line without a newline still counts."""
+    return text.count("\n") + (1 if text and not text.endswith("\n") else 0)
+
+
 def _fmt(c: dict[str, int] | None) -> str:
     return "-" if c is None else "/".join(str(c[k]) for k in KEYS)
 
@@ -134,7 +139,7 @@ def main() -> None:
         """The JSON report written by the same run as this log."""
         lib, runner, broken = _run_of(name)
         report = f"{lib}-{runner}{broken}.json"
-        if report == name or report not in texts:
+        if report not in texts:
             return None
         return json_counts(json.loads(texts[report]))
 
@@ -158,7 +163,7 @@ def main() -> None:
             agree = all(mine == c for c in checks)
             note = ""
         print(
-            f"| {name} | {run.format} | {text.count(chr(10))} | {len(run.results)} "
+            f"| {name} | {run.format} | {_line_count(text)} | {len(run.results)} "
             f"| {_fmt(mine)} | {run.summary_total if run.summary_total is not None else '-'} "
             f"| {_fmt(own)} | {_fmt(rep)} | {'yes' if agree else 'NO'}{note} "
             f"| {'yes' if run.incomplete else 'no'} | {_median_ms(text, args.repeats):.2f} |"
