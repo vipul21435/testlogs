@@ -9,8 +9,8 @@ id already seen on a verbose line, or else ends at the first `` - `` outside bra
 The final ``==== 3 passed in 0.02s ====`` line marks a complete log; without
 it the run is reported incomplete.
 
-pytest 9 reports ``unittest`` subtests itself: the parent test is still printed
-``PASSED`` and each failing subtest gets a ``SUBFAILED(i=1) node::id`` summary row.
+Measured with pytest 9.2, pytest reports ``unittest`` subtests: the parent test is
+still printed ``PASSED`` and each failing subtest gets a ``SUBFAILED(i=1) node::id`` summary row.
 A test with a failing subtest is recorded as failed, which is what JUnit XML and
 ``unittest -v`` say about the same test; passing subtests are only counted.
 """

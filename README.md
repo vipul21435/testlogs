@@ -152,9 +152,10 @@ Both scripts replace the checkout path with `/work`, the home directory with
    `duration`. pytest-rerunfailures' `id RERUN` lines are counted, not recorded: the
    test's last status is its record, and a note names every test that passed only on
    a rerun, since that is the flaky case a diff would otherwise hide.
-6. **Subtests**. pytest 9 runs `unittest` subtests itself
-   ([pytest docs](https://docs.pytest.org/en/stable/how-to/subtests.html)). Measured
-   here with pytest 9.2.0: for a `unittest.TestCase.subTest` failure the parent line
+6. **Subtests**. pytest 9.0 added a built-in `subtests` fixture
+   ([pytest docs](https://docs.pytest.org/en/stable/how-to/subtests.html)). That page
+   does not cover `unittest.TestCase.subTest`; what follows is measured here with
+   pytest 9.2.0, which also reports those. For a `subTest` failure the parent line
    says `PASSED`, a `SUBFAILED(i=1)` row follows, and the final line counts
    `1 failed, 3 passed` for three tests; for the `subtests` fixture the parent is also
    `FAILED` and the final line says `3 failed` for one failing test with two failing
