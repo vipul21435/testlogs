@@ -183,7 +183,10 @@ Both scripts replace the checkout path with `/work`, the home directory with
    [cmd/test2json](https://pkg.go.dev/cmd/test2json); cargo's pretty and terse shapes
    follow the [rustc test harness docs](https://doc.rust-lang.org/rustc/tests/index.html).
    Terse output names only failures, so its passing and ignored tests are counted in a
-   note instead of being given invented ids.
+   note instead of being given invented ids. The terse formatter in libtest's
+   `formatters/terse.rs` ends every 87 result characters with a ` n/total` counter, which
+   is read and dropped; go prints `(cached)` in place of the time for a cached package
+   (`cmd/go/internal/test/test.go`), and that line closes the package like any other.
 10. **Diff** (`testlogs.diff`). Records are grouped by id (or by `key(id)`); a
     duplicated id collapses to one status, failure winning over pass. Then
     failed/error -> passed/xpass is *fixed*, passed/xpass -> failed/error is *broken*,

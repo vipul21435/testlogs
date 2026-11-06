@@ -1,0 +1,17 @@
+     Running unittests src/lib.rs (target/debug/deps/sample-0123abcd)
+
+running 200 tests
+....................................................................................... 87/200
+............F.......................................................................... 174/200
+................i....i....
+failures:
+
+---- table::tests::case_100 stdout ----
+thread 'table::tests::case_100' panicked at src/table.rs:12:5:
+assertion failed: ok
+
+
+failures:
+    table::tests::case_100
+
+test result: FAILED. 197 passed; 1 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.02s

@@ -25,7 +25,8 @@ _RESULT = re.compile(
     r"(?P<ignored>\d+) ignored; (?P<measured>\d+) measured; .*finished in (?P<secs>[\d.]+)s"
 )
 _FAILURE_HEAD = re.compile(r"^---- (?P<name>.+?) stdout ----$")
-_TERSE = re.compile(r"^[.Fi]+$")
+# Every full line of terse output ends in a " n/total" progress counter (libtest terse.rs).
+_TERSE = re.compile(r"^(?P<chars>[.Fi]+)(?: \d+/\d+)?$")
 _STATUS = {"ok": Status.PASSED, "FAILED": Status.FAILED, "ignored": Status.SKIPPED}
 
 
@@ -100,8 +101,9 @@ def parse(lines: list[str]) -> Run:
                 continue
             block_results.append(TestResult(f"{file}::{m.group('name')}", _STATUS[res], file))
             continue
-        if _TERSE.match(line) and not block_results:
-            terse_chars += line
+        m = _TERSE.match(line)
+        if m and not block_results:
+            terse_chars += m.group("chars")
     if in_block:
         run.incomplete = True
         run.results.extend(block_results)

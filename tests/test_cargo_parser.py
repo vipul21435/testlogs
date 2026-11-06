@@ -59,3 +59,11 @@ def test_cargo_bench_lines_are_not_tests():
 def test_cargo_text_without_blocks_is_incomplete():
     run = parse("   Compiling sample v0.1.0\nerror: could not compile\n", fmt="cargo")
     assert run.incomplete and run.notes == ["no test results found"]
+
+
+def test_cargo_terse_progress_counters_after_each_full_line():
+    # libtest's terse formatter ends every 87 result characters with " n/total".
+    run = parse((FIX / "cargo-terse-long.log").read_text())
+    assert not run.incomplete and run.summary_total == 200
+    assert [r.id for r in run.results] == ["src/lib.rs::table::tests::case_100"]
+    assert any("197 passed and 2 ignored" in n for n in run.notes)
