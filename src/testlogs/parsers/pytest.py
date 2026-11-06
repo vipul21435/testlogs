@@ -81,17 +81,26 @@ def looks_like(lines: list[str]) -> bool:
 
 def _leading_node_id(line: str) -> str | None:
     """The node id at the start of ``line``: up to the first space outside brackets."""
-    depth = 0
-    for i, ch in enumerate(line):
-        if ch == "[":
-            depth += 1
-        elif ch == "]":
-            depth = max(depth - 1, 0)
-        elif ch.isspace() and depth == 0:
-            head = line[:i]
-            break
-    else:
+    if "::" not in line or line[0].isspace():
+        return None
+    space = line.find(" ")
+    bracket = line.find("[")
+    if space == -1:
         head = line
+    elif bracket == -1 or bracket > space:
+        head = line[:space]  # no parameter brackets before the first space
+    else:
+        depth = 0
+        head = line
+        for i in range(bracket, len(line)):
+            ch = line[i]
+            if ch == "[":
+                depth += 1
+            elif ch == "]":
+                depth = max(depth - 1, 0)
+            elif ch.isspace() and depth == 0:
+                head = line[:i]
+                break
     first, sep, _ = head.partition("::")
     if sep and first and ":" not in first.replace(":\\", ""):
         return head
