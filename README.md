@@ -382,6 +382,11 @@ passes on Python 3.10.20
   with the run's own check mark (`✔` for mocha 10) at a test's indent is read as a
   test; one with the other mark (`✓`) is dropped, and the summary-count note shows
   any gap left.
+- A TAP `ok N - name # TODO` line is read as `xpass` (a todo test that passed, as
+  TAP defines it) and `not ok ... # TODO` as `xfail`. node:test prints
+  `ok 1 - todo one # TODO` (spec: `✔ todo one # TODO`) for an `it.todo()` with no
+  body, so that test is `xpass`, while jest and vitest todo tests are `skipped`; in a
+  diff a node:test test that went from failing to a body-less todo is listed as fixed.
 - A TAP subtest block without its own `1..N` plan is checked only through its parent:
   a missing child line goes unnoticed if the parent's result line is present.
 - unittest `file` is the dotted module, not a path; for a doctest it is the module the
