@@ -1,0 +1,14 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.2.0, pluggy-1.7.0 -- /work/.venv/bin/python3
+rootdir: /work
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 4 items
+
+fixtures/interrupt_sample/test_interrupt.py::test_first PASSED           [ 25%]
+fixtures/interrupt_sample/test_interrupt.py::test_interrupted 
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! KeyboardInterrupt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/work/fixtures/interrupt_sample/test_interrupt.py:9: KeyboardInterrupt
+(to show a full traceback on KeyboardInterrupt use --full-trace)
+============================== 1 passed in 0.15s ===============================

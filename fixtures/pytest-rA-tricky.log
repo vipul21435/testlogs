@@ -1,0 +1,72 @@
+===================================================================== test session starts ======================================================================
+platform darwin -- Python 3.12.13, pytest-9.2.0, pluggy-1.7.0 -- /work/.venv/bin/python3
+rootdir: /work
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 9 items
+
+fixtures/tricky_sample/test_tricky.py::test_xfail_paren XFAIL (bug (see #1))                                                                             [ 11%]
+fixtures/tricky_sample/test_tricky.py::test_skip_paren SKIPPED (no (reason))                                                                             [ 22%]
+fixtures/tricky_sample/test_tricky.py::test_skip_param[1] SKIPPED (needs (x))                                                                            [ 33%]
+fixtures/tricky_sample/test_tricky.py::test_skip_param[2] SKIPPED (needs (x))                                                                            [ 44%]
+fixtures/tricky_sample/test_tricky.py::test_skip_param[3] SKIPPED (needs (x))                                                                            [ 55%]
+fixtures/tricky_sample/test_tricky.py::test_fail_and_teardown_error FAILED                                                                               [ 66%]
+fixtures/tricky_sample/test_tricky.py::test_fail_and_teardown_error ERROR                                                                                [ 66%]
+fixtures/tricky_sample/test_tricky.py::test_pass_and_teardown_error PASSED                                                                               [ 77%]
+fixtures/tricky_sample/test_tricky.py::test_pass_and_teardown_error ERROR                                                                                [ 77%]
+fixtures/tricky_sample/test_tricky.py::test_prints_pytest_lines FAILED                                                                                   [ 88%]
+fixtures/tricky_sample/test_tricky.py::test_plain PASSED                                                                                                 [100%]
+
+============================================================================ ERRORS ============================================================================
+______________________________________________________ ERROR at teardown of test_fail_and_teardown_error _______________________________________________________
+
+    @pytest.fixture
+    def broken_teardown():
+        yield
+>       raise RuntimeError("teardown")
+E       RuntimeError: teardown
+
+fixtures/tricky_sample/test_tricky.py:24: RuntimeError
+______________________________________________________ ERROR at teardown of test_pass_and_teardown_error _______________________________________________________
+
+    @pytest.fixture
+    def broken_teardown():
+        yield
+>       raise RuntimeError("teardown")
+E       RuntimeError: teardown
+
+fixtures/tricky_sample/test_tricky.py:24: RuntimeError
+=========================================================================== FAILURES ===========================================================================
+_________________________________________________________________ test_fail_and_teardown_error _________________________________________________________________
+
+broken_teardown = None
+
+    def test_fail_and_teardown_error(broken_teardown):
+>       assert 0
+E       assert 0
+
+fixtures/tricky_sample/test_tricky.py:28: AssertionError
+___________________________________________________________________ test_prints_pytest_lines ___________________________________________________________________
+
+    def test_prints_pytest_lines():
+        print("test_fake.py::test_phantom PASSED")
+        print("========== 1 passed in 0.01s ==========")
+>       assert 0
+E       assert 0
+
+fixtures/tricky_sample/test_tricky.py:38: AssertionError
+--------------------------------------------------------------------- Captured stdout call ---------------------------------------------------------------------
+test_fake.py::test_phantom PASSED
+========== 1 passed in 0.01s ==========
+============================================================================ PASSES ============================================================================
+=================================================================== short test summary info ====================================================================
+PASSED fixtures/tricky_sample/test_tricky.py::test_pass_and_teardown_error
+PASSED fixtures/tricky_sample/test_tricky.py::test_plain
+SKIPPED [1] fixtures/tricky_sample/test_tricky.py:11: no (reason)
+SKIPPED [3] fixtures/tricky_sample/test_tricky.py:18: needs (x)
+XFAIL fixtures/tricky_sample/test_tricky.py::test_xfail_paren - bug (see #1)
+ERROR fixtures/tricky_sample/test_tricky.py::test_fail_and_teardown_error - RuntimeError: teardown
+ERROR fixtures/tricky_sample/test_tricky.py::test_pass_and_teardown_error - RuntimeError: teardown
+FAILED fixtures/tricky_sample/test_tricky.py::test_fail_and_teardown_error - assert 0
+FAILED fixtures/tricky_sample/test_tricky.py::test_prints_pytest_lines - assert 0
+================================================= 2 failed, 2 passed, 4 skipped, 1 xfailed, 2 errors in 0.04s ==================================================

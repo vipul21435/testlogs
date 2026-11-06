@@ -48,9 +48,27 @@ $U fixtures.subtests_sample.test_subtests > fixtures/subtests-unittest-v.log 2>&
 # pytest's own subtests fixture: the parent is reported FAILED as well.
 $P -v fixtures/subtests_sample/test_fixture_subtests.py > fixtures/subtests-fixture-pytest-v.log 2>&1
 
+# Runs that stop early: KeyboardInterrupt in a test (as a timeout would raise) and a
+# module that fails to import, which interrupts collection.
+$P -v fixtures/interrupt_sample > fixtures/pytest-v-interrupt.log 2>&1
+$P -v fixtures/collect_error_sample > fixtures/pytest-v-collect-error.log 2>&1
+# A -q run with a single passing test: one dot and a borderless final line.
+$P -q fixtures/collect_error_sample/test_ok.py > fixtures/pytest-q-one.log 2>&1
+# Skip and xfail reasons holding ")", a teardown error after a failure and after a pass,
+# and a test that prints lines shaped like pytest's. A wide terminal keeps reasons whole.
+COLUMNS=160 $P -v fixtures/tricky_sample > fixtures/pytest-v-tricky.log 2>&1
+COLUMNS=160 $P -v -rA fixtures/tricky_sample > fixtures/pytest-rA-tricky.log 2>&1
+COLUMNS=160 $P -q -rA fixtures/tricky_sample > fixtures/pytest-q-rA-tricky.log 2>&1
+# An outer test that runs pytest -v itself (pytester) and fails, so a whole inner session
+# sits in the captured output; and the same log cut right after the inner final line.
+$P -v -p pytester fixtures/pytester_sample > fixtures/pytest-v-pytester.log 2>&1
+n=$(grep -n "^=* 1 failed, 1 passed in" fixtures/pytest-v-pytester.log | head -n 1 | cut -d: -f1)
+head -n "$n" fixtures/pytest-v-pytester.log > fixtures/pytest-v-pytester-cut.log
+
 # Replace the machine's checkout path and host name so fixtures are portable.
 for f in fixtures/*.log fixtures/*.xml; do
-  sed -i.bak -e "s#$ROOT#/work#g" -e "s#$HOME#/home/user#g" -e 's/hostname="[^"]*"/hostname="localhost"/g' \
+  sed -i.bak -e "s#$ROOT#/work#g" -e "s#$HOME#/home/user#g" \
+    -e "s#[^ '(]*/pytest-of-[^/]*/#/tmp/pytest-of-user/#g" -e 's/hostname="[^"]*"/hostname="localhost"/g' \
     -e 's/timestamp="[^"]*"/timestamp="2026-01-01T00:00:00"/g' "$f" && rm "$f.bak"
 done
 echo "fixtures regenerated"

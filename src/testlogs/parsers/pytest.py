@@ -7,7 +7,9 @@ summary wins, because a test's verbose line can be split by captured output.
 A parameter id may contain `` - `` itself, so a summary row's id is the longest
 id already seen on a verbose line, or else ends at the first `` - `` outside brackets.
 The final ``==== 3 passed in 0.02s ====`` line marks a complete log; without
-it the run is reported incomplete.
+it the run is reported incomplete. pytest prints the final line even after a run
+stops early, so a ``!!! KeyboardInterrupt !!!`` or ``!!! Interrupted: ... !!!``
+banner also makes the run incomplete, and the test that was running is named.
 
 Measured with pytest 9.2, pytest reports ``unittest`` subtests: the parent test is
 still printed ``PASSED`` and each failing subtest gets a ``SUBFAILED(i=1) node::id`` summary row.
@@ -71,6 +73,13 @@ _FINAL_QUIET = re.compile(
     r"^(?:\d+ [a-z]+(?: [a-z]+)?|no tests ran)(?:, \d+ [a-z]+(?: [a-z]+)?)* in [\d.]+s"
     r"(?: \([\d:]+\))?$"
 )
+# pytest prints a "!" banner when a run stops early: Ctrl-C or a timeout's KeyboardInterrupt,
+# errors during collection, -x/--maxfail, or pytest.exit(). The final line still follows.
+_INTERRUPT = re.compile(
+    r"^!+ (?P<what>KeyboardInterrupt|Interrupted: .*?|stopping after .*?"
+    r"|_pytest\.outcomes\.Exit.*?) !+$"
+)
+_COLLECTED = re.compile(r"^collect(?:ing \.\.\. collect)?ed (?P<n>\d+) items?\b")
 _DURATION = re.compile(r"^(?P<secs>\d+\.\d+)s\s+(?:call|setup|teardown)\s+(?P<id>\S.*)$")
 
 
@@ -151,9 +160,22 @@ def parse(lines: list[str]) -> Run:
     complete = False
     pending: str | None = None  # an id whose status has not been printed yet
     reruns: dict[str, int] = {}
+    interrupted: list[str] = []
+    unfinished: str | None = None  # the test running when the run was interrupted
+    collected: int | None = None
     for raw in lines:
         line = raw.rstrip()
         if not line:
+            continue
+        m = _INTERRUPT.match(line)
+        if m:
+            interrupted.append(m.group("what"))
+            if pending is not None and unfinished is None:
+                unfinished = pending
+            continue
+        m = _COLLECTED.match(line)
+        if m and collected is None:
+            collected = int(m.group("n"))
             continue
         if _SUMMARY_HEADER.match(line):
             in_summary = True
@@ -254,7 +276,21 @@ def parse(lines: list[str]) -> Run:
     if final_total is not None:
         # pytest counts each failing subtest as one "failed" on top of its test.
         run.summary_total = final_total - sum(subfailed.values())
-    run.incomplete = not complete
-    if run.incomplete:
+    if pending is not None and unfinished is None and not complete:
+        unfinished = pending
+    run.incomplete = not complete or bool(interrupted)
+    if not complete:
         run.notes.append("no final summary line: the log is truncated or the run was interrupted")
+    for what in interrupted:
+        if what == "KeyboardInterrupt":
+            run.notes.append(f"pytest printed '{what}': stopped by the user or a timeout")
+        else:
+            run.notes.append(f"pytest printed '{what}': the run stopped early")
+    if unfinished is not None:
+        run.notes.append(f"{unfinished} started and has no status")
+    if interrupted and collected is not None and collected > len(run.results):
+        run.notes.append(
+            f"pytest collected {plural(collected, 'test')}; "
+            f"{len(run.results)} {'has' if len(run.results) == 1 else 'have'} a status"
+        )
     return run
