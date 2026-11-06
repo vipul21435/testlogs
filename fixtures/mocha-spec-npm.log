@@ -1,0 +1,42 @@
+
+> testlogs-node-sample@0.0.0 mocha-edge
+> mocha mocha-edge/edge.spec.js
+
+printed while the file loads
+
+
+  outer
+    ✔ first
+  indented log line
+    ✔ logs
+    1) fails
+    - pending one
+    ✔ after the nested block
+    - dash describe
+      ✔ inside dash
+
+  second
+    ✔ adds
+
+
+  5 passing (6ms)
+  1 pending
+  1 failing
+
+  1) outer
+       fails:
+
+      AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+1 !== 2
+
+      + expected - actual
+
+      -1
+      +2
+      
+      at Context.<anonymous> (mocha-edge/edge.spec.js:13:12)
+      at process.processImmediate (node:internal/timers:504:21)
+
+
+

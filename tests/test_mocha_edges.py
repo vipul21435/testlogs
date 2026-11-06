@@ -1,0 +1,38 @@
+"""mocha spec logs with output mixed into the tree, an npm banner and a run over a minute."""
+
+from pathlib import Path
+
+from testlogs import detect_format, diff_runs, parse
+
+FIX = Path(__file__).resolve().parent.parent / "fixtures"
+EXPECTED = [
+    ("outer > first", "passed"),
+    ("outer > logs", "passed"),
+    ("outer > fails", "failed"),
+    ("outer > pending one", "skipped"),
+    ("outer > after the nested block", "passed"),
+    ("outer > - dash describe > inside dash", "passed"),
+    ("second > adds", "passed"),
+]
+
+
+def _ids(name: str):
+    run = parse((FIX / name).read_text(), fmt="mocha")
+    return run, [(r.id, r.status.value) for r in run.results]
+
+
+def test_output_mixed_into_the_tree_does_not_change_ids():
+    run, got = _ids("mocha-spec-edge.log")
+    assert got == EXPECTED
+    assert not run.incomplete and run.summary_total == 7
+
+
+def test_npm_banner_is_not_a_describe_title():
+    text = (FIX / "mocha-spec-npm.log").read_text()
+    assert text.startswith("\n> testlogs-node-sample@")
+    assert detect_format(text) == "mocha"
+    run, got = _ids("mocha-spec-npm.log")
+    assert got == EXPECTED
+    plain = parse((FIX / "mocha-spec-edge.log").read_text(), fmt="mocha")
+    d = diff_runs(plain, run)
+    assert d.appeared == [] and d.vanished == []

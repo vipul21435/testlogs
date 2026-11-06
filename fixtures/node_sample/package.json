@@ -4,6 +4,9 @@
   "private": true,
   "description": "Small sample suites whose logs are the jest, vitest, mocha and node:test fixtures.",
   "license": "MIT",
+  "scripts": {
+    "mocha-edge": "mocha mocha-edge/edge.spec.js"
+  },
   "devDependencies": {
     "jest": "^29.7.0",
     "mocha": "^10.8.2",

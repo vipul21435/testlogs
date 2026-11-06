@@ -25,10 +25,24 @@ def looks_like(lines: list[str]) -> bool:
     )
 
 
+def _indent(line: str) -> int:
+    return len(line) - len(line.lstrip())
+
+
+def _next_indent(lines: list[str], i: int) -> int:
+    """Indent of the first non-empty line after ``lines[i]``, or -1 at the end."""
+    for nxt in lines[i + 1 :]:
+        if nxt.strip():
+            return _indent(nxt.rstrip())
+    return -1
+
+
 def parse(lines: list[str]) -> Run:
     run = Run(format="mocha")
     stack: list[tuple[int, str]] = []
     complete = False
+    prev_blank = True
+    prev_leaf = -1  # indent of the line before, when it was a test result
     for i, raw in enumerate(lines):
         line = raw.rstrip()
         if _PASSING.match(line):
@@ -41,10 +55,15 @@ def parse(lines: list[str]) -> Run:
             run.summary_total = total
             break
         if not line.strip():
+            prev_blank = True
             continue
-        indent = len(line) - len(line.lstrip())
+        was_blank, prev_blank = prev_blank, False
+        after_leaf, prev_leaf = prev_leaf, -1
+        indent = _indent(line)
         m = _LEAF.match(line)
-        if m:
+        # "- title" is a pending test unless deeper lines follow it: then it is a
+        # describe whose title starts with "- ".
+        if m and not (m.group("mark") == "-" and _next_indent(lines, i) > indent):
             while stack and stack[-1][0] >= indent:
                 stack.pop()
             mark = m.group("mark")
@@ -57,12 +76,21 @@ def parse(lines: list[str]) -> Run:
             ms = m.group("ms")
             tid = " > ".join([*(n for _, n in stack), m.group("name")])
             run.results.append(TestResult(tid, status, "", None if ms is None else int(ms) / 1000))
+            prev_leaf = indent
             continue
-        if indent >= 2 or (indent == 0 and not run.results and stack == []):
-            # A describe title. Captured stdout at indent 0 is ignored once a
-            # suite has started.
-            if indent == 0 and line and run.results:
-                continue
+        # A describe title. mocha indents two spaces per level, starting at two (the
+        # root suite has no title), and prints a blank line before each top-level
+        # suite unless it follows a root-level test; a title is always followed by
+        # deeper lines. Anything else (npm's
+        # "> script" banner, console output) is not part of the tree.
+        top = stack[-1][0] if stack else 0
+        if (
+            indent >= 2
+            and indent % 2 == 0
+            and indent <= top + 2
+            and (indent > 2 or was_blank or after_leaf == 2)
+            and _next_indent(lines, i) > indent
+        ):
             while stack and stack[-1][0] >= indent:
                 stack.pop()
             stack.append((indent, line.strip()))
