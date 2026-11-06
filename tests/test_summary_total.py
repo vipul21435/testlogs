@@ -34,3 +34,11 @@ def test_summary_total_against_records(name, total, records):
 def test_truncated_log_has_no_summary_total():
     run = parse((FIX / "pytest-v-truncated.log").read_text(encoding="utf-8"))
     assert run.summary_total is None and run.incomplete
+
+
+def test_quiet_teardown_error_after_a_pass_is_not_counted_twice():
+    # -q names only failures and errors, so the passing test with a teardown error
+    # shows one ERROR row, while the final line counts it as passed and as an error.
+    run = parse((FIX / "pytest-q-tricky.log").read_text(encoding="utf-8"), fmt="pytest")
+    assert run.summary_total == 9
+    assert "the log's summary counts 9 tests; 3 records were parsed" in run.notes

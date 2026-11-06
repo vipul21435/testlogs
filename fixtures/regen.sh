@@ -70,6 +70,7 @@ $P -q fixtures/collect_error_sample/test_ok.py > fixtures/pytest-q-one.log 2>&1
 COLUMNS=160 $P -v fixtures/tricky_sample > fixtures/pytest-v-tricky.log 2>&1
 COLUMNS=160 $P -v -rA fixtures/tricky_sample > fixtures/pytest-rA-tricky.log 2>&1
 COLUMNS=160 $P -q -rA fixtures/tricky_sample > fixtures/pytest-q-rA-tricky.log 2>&1
+COLUMNS=160 $P -q fixtures/tricky_sample > fixtures/pytest-q-tricky.log 2>&1
 # An outer test that runs pytest -v itself (pytester) and fails, so a whole inner session
 # sits in the captured output; and the same log cut right after the inner final line.
 $P -v -p pytester fixtures/pytester_sample > fixtures/pytest-v-pytester.log 2>&1

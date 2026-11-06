@@ -1,0 +1,48 @@
+xssssFE.EF.                                                                                                                                              [100%]
+============================================================================ ERRORS ============================================================================
+______________________________________________________ ERROR at teardown of test_fail_and_teardown_error _______________________________________________________
+
+    @pytest.fixture
+    def broken_teardown():
+        yield
+>       raise RuntimeError("teardown")
+E       RuntimeError: teardown
+
+fixtures/tricky_sample/test_tricky.py:24: RuntimeError
+______________________________________________________ ERROR at teardown of test_pass_and_teardown_error _______________________________________________________
+
+    @pytest.fixture
+    def broken_teardown():
+        yield
+>       raise RuntimeError("teardown")
+E       RuntimeError: teardown
+
+fixtures/tricky_sample/test_tricky.py:24: RuntimeError
+=========================================================================== FAILURES ===========================================================================
+_________________________________________________________________ test_fail_and_teardown_error _________________________________________________________________
+
+broken_teardown = None
+
+    def test_fail_and_teardown_error(broken_teardown):
+>       assert 0
+E       assert 0
+
+fixtures/tricky_sample/test_tricky.py:28: AssertionError
+___________________________________________________________________ test_prints_pytest_lines ___________________________________________________________________
+
+    def test_prints_pytest_lines():
+        print("test_fake.py::test_phantom PASSED")
+        print("========== 1 passed in 0.01s ==========")
+>       assert 0
+E       assert 0
+
+fixtures/tricky_sample/test_tricky.py:38: AssertionError
+--------------------------------------------------------------------- Captured stdout call ---------------------------------------------------------------------
+test_fake.py::test_phantom PASSED
+========== 1 passed in 0.01s ==========
+=================================================================== short test summary info ====================================================================
+FAILED fixtures/tricky_sample/test_tricky.py::test_fail_and_teardown_error - assert 0
+FAILED fixtures/tricky_sample/test_tricky.py::test_prints_pytest_lines - assert 0
+ERROR fixtures/tricky_sample/test_tricky.py::test_fail_and_teardown_error - RuntimeError: teardown
+ERROR fixtures/tricky_sample/test_tricky.py::test_pass_and_teardown_error - RuntimeError: teardown
+2 failed, 2 passed, 4 skipped, 1 xfailed, 2 errors in 0.06s

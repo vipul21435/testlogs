@@ -88,6 +88,7 @@ _SECTION = re.compile(r"^=+ (?:FAILURES|ERRORS|PASSES|XFAILURES|XPASSES) =+$")
 # "____ test_name ____" starts the next test's block.
 _CAPTURED = re.compile(r"^-+ Captured (?:stdout|stderr|log) .*-+$")
 _BLOCK = re.compile(r"^_{3,} .* _{3,}$")
+_TEARDOWN_BLOCK = re.compile(r"^_{3,} ERROR at teardown of .* _{3,}$")
 _SECTION_END = re.compile(
     r"^=+ (?:short test summary info|warnings summary|slowest .*durations.*) =+$"
 )
@@ -221,6 +222,7 @@ def parse(lines: list[str]) -> Run:
     in_section = False
     captured = False  # inside a section, within a test's captured output
     in_warnings = False  # the warnings summary names tests on lines of their own
+    teardown_errors = 0  # "ERROR at teardown of" blocks: each test is counted twice
 
     def result_seen() -> None:
         # A result after a final-shaped line: that line was output, not the end.
@@ -258,6 +260,8 @@ def parse(lines: list[str]) -> Run:
                 captured = True
             elif _BLOCK.match(line):
                 captured = False
+                if _TEARDOWN_BLOCK.match(line):
+                    teardown_errors += 1
             if _SECTION_END.match(line):
                 in_section = False
             elif (
@@ -395,7 +399,10 @@ def parse(lines: list[str]) -> Run:
     if final_total is not None:
         # pytest counts each failing subtest as one "failed" on top of its test.
         # and a test with a setup or teardown error once more as an error.
+        # With -q a passing test's teardown error is named only once, by its ERROR
+        # row, so the ERRORS section's "at teardown" blocks are counted as well.
         doubled = sum(1 for st in seen.values() if Status.ERROR in st and len(st) > 1)
+        doubled = max(doubled, teardown_errors)
         run.summary_total = final_total - sum(subfailed.values()) - doubled
     if pending is not None and unfinished is None and not complete:
         unfinished = pending
