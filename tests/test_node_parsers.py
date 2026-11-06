@@ -121,3 +121,22 @@ def test_nodetest_suite_summary_lines_are_not_tests():
     ids = [r.id for r in _load("nodetest-spec.log").results]
     assert "maths" not in ids and "maths > add" not in ids
     assert len(ids) == 9
+
+
+def test_json_report_suite_failure_interruption_and_total():
+    doc = (
+        '{"numTotalTests": 3, "wasInterrupted": true, "testResults": ['
+        '{"name": "/w/a.test.js", "status": "failed", "assertionResults": []},'
+        '{"name": "/w/b.test.js", "status": "passed", "assertionResults": ['
+        '{"ancestorTitles": ["s"], "title": "t", "status": "passed", "duration": 4}]}]}'
+    )
+    run = parse(doc)
+    assert run.format == "jest-json" and run.incomplete
+    assert [(r.id, r.status.value) for r in run.results] == [
+        ("/w/a.test.js", "error"),
+        ("/w/b.test.js::s > t", "passed"),
+    ]
+    assert run.results[1].duration == 0.004
+    assert run.summary_total == 3
+    assert any("suite failed with no test results" in n for n in run.notes)
+    assert any("summary counts 3 tests; 2 records" in n for n in run.notes)

@@ -48,6 +48,6 @@ def parse(text: str) -> Run:
     if doc.get("wasInterrupted"):
         run.incomplete = True
         run.notes.append("report says the run was interrupted")
-    if doc.get("numTotalTests") is not None and doc["numTotalTests"] != len(run.results):
-        run.notes.append(f"report counts {doc['numTotalTests']} tests, found {len(run.results)}")
+    if isinstance(doc.get("numTotalTests"), int):
+        run.summary_total = doc["numTotalTests"]
     return run
