@@ -17,8 +17,10 @@ import re
 
 from testlogs.models import Run, Status, TestResult
 
+# vitest writes "mark name duration" with one space between them, so a name with a
+# leading or trailing space, or an empty name ("suite > "), is kept as written.
 _LINE = re.compile(
-    r"^\s*(?P<mark>✓|×|↓|✗)\s+(?P<path>.+?)(?:\s+(?P<ms>[\d.]+)ms)?(?:\s+\[skipped\])?$"
+    r"^\s*(?P<mark>✓|×|↓|✗) (?P<path>.*?\S.*?)(?: (?P<ms>[\d.]+)ms)?(?: \[skipped\])?$"
 )
 _FILE = re.compile(r"^\s*(?:❯|✓|×)\s+(?P<file>\S+\.[cm]?[jt]sx?)\s+\((?P<n>\d+) tests?[^)]*\)")
 # Under "Failed Suites": " FAIL  file [ file ]" for a test file that failed to load.
@@ -79,7 +81,7 @@ def parse(lines: list[str]) -> Run:
         m = _LINE.match(line)
         if m:
             path = m.group("path")
-            parts = [p.strip() for p in path.split(" > ")]
+            parts = path.split(" > ")
             if default_mode:
                 tid = f"{file}::{' > '.join(parts)}"
                 f = file

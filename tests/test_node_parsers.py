@@ -199,3 +199,22 @@ def test_vitest_printed_output_blocks_are_not_results():
     default = parse((FIX / "vitest-default-print.log").read_text())
     assert [(r.id, r.status.value) for r in default.results] == [(pf + "really fails", "failed")]
     assert not [n for n in verbose.notes if "summary counts" in n]
+
+
+def test_vitest_verbose_keeps_spaces_at_the_ends_of_names():
+    # Trimmed from a real vitest 4.1.5 verbose run of unjs/ufo. vitest writes
+    # "mark name duration" with single spaces, so "encodeHash >  0ms" is a test with
+    # an empty name and "withQuery >  with {}" one whose name starts with a space;
+    # the JSON report of the same run has the same titles.
+    run = parse((FIX / "vitest-verbose-spaces.log").read_text(encoding="utf-8"))
+    assert run.format == "vitest" and not run.incomplete
+    assert [r.id for r in run.results] == [
+        "test/query.test.ts::withQuery >  with {}",
+        "test/encoding.test.ts::encodeHash > ",
+        "test/utilities.test.ts::isEqual > foo == /foo/ ",
+        "test/is-same.test.ts::isSamePath > / == ",
+        "test/is-same.test.ts::isSamePath > /foo != /bar",
+    ]
+    assert run.results[-1].status is Status.FAILED
+    assert run.results[0].duration == 0.003
+    assert run.summary_total == 5

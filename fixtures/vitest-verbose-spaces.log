@@ -1,0 +1,14 @@
+
+ RUN  v4.1.5 /work/ufo/repo
+
+ ✓ test/query.test.ts > withQuery >  with {} 3ms
+ ✓ test/encoding.test.ts > encodeHash >  0ms
+ ✓ test/utilities.test.ts > isEqual > foo == /foo/  0ms
+ ✓ test/is-same.test.ts > isSamePath > / ==  0ms
+ × test/is-same.test.ts > isSamePath > /foo != /bar 6ms
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 4 passed (5)
+   Start at  16:25:36
+   Duration  837ms (transform 563ms, setup 0ms, import 986ms, tests 146ms, environment 2ms)
+
