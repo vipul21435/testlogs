@@ -49,6 +49,7 @@ _LINE_PARSERS = (
 
 def detect_format(text: str) -> str | None:
     """Return the format name, or ``None`` when nothing matches."""
+    text = text.removeprefix("\ufeff")  # a UTF-8 byte-order mark
     plain = strip_ansi(text)
     if junit.looks_like(plain):
         return "junit"
@@ -84,6 +85,7 @@ def parse(text: str, fmt: str | None = None) -> Run:
 
 
 def _parse(text: str, fmt: str | None) -> Run:
+    text = text.removeprefix("\ufeff")
     if fmt is None:
         fmt = detect_format(text)
     if fmt is None:

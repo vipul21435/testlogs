@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import math
 import xml.etree.ElementTree as ET
 
-from testlogs.models import Run, Status, TestResult
+from testlogs.models import Run, Status, TestResult, plural
 
 
 def looks_like(text: str) -> bool:
@@ -36,12 +37,26 @@ def parse(text: str) -> Run:
         run.incomplete = True
         run.notes.append(f"XML does not parse: {exc}")
         return run
+    odd_times = 0
     for case in root.iter("testcase"):
         name = case.get("name", "")
         classname = case.get("classname", "")
         tid = f"{classname}::{name}" if classname else name
         file = case.get("file", "")
         raw = case.get("time")
-        duration = float(raw) if raw not in (None, "") else None
+        duration = None
+        if raw not in (None, ""):
+            try:
+                duration = float(raw)
+            except ValueError:
+                duration = None
+            if duration is None or not math.isfinite(duration) or duration < 0:
+                odd_times += 1
+                duration = None
         run.results.append(TestResult(tid, _status(case), file, duration))
+    if odd_times:
+        run.notes.append(
+            f"{plural(odd_times, 'testcase')} with a time that is not a finite number of "
+            "seconds; their durations are left empty"
+        )
     return run

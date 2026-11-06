@@ -16,7 +16,7 @@ from testlogs.parsers import FORMATS, parse
 def _read(path: str) -> str:
     if path == "-":
         return sys.stdin.read()
-    return Path(path).read_text(encoding="utf-8", errors="replace")
+    return Path(path).read_text(encoding="utf-8-sig", errors="replace")
 
 
 def _load(path: str, fmt: str | None, prefixes: list[str] | None = None) -> Run:
