@@ -69,3 +69,26 @@ def test_cli_diff_warns_on_incomplete(capsys):
 def test_cli_bad_format(capsys):
     assert main(["parse", str(FIX / "regen.sh")]) == 2
     assert "could not detect" in capsys.readouterr().err
+
+
+def test_strip_prefix_makes_json_report_diffable(capsys):
+    args = ["diff", str(FIX / "vitest-report.json"), str(FIX / "vitest-verbose.log"), "--json"]
+    assert main([*args, "--strip-prefix", "/work/node_sample/"]) == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["appeared"] == []
+    # The verbose reporter of vitest 2 does not name skipped and todo tests.
+    assert out["vanished"] == [
+        "vitest/maths.test.js::maths > not written yet",
+        "vitest/maths.test.js::maths > skipped for now",
+    ]
+
+
+def test_parse_strip_prefix(capsys):
+    assert main(["parse", str(FIX / "jest-report.json"), "--strip-prefix", "/work/"]) == 0
+    assert "\npassed  node_sample/jest/" in "\n" + capsys.readouterr().out
+
+
+def test_fail_on_incomplete_exit_code():
+    before, after = str(FIX / "pytest-v-truncated.log"), str(FIX / "pytest-v-after.log")
+    assert main(["diff", before, after, "--fail-on-incomplete"]) == 3
+    assert main(["diff", after, after, "--fail-on-incomplete"]) == 0

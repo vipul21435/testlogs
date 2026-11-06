@@ -65,6 +65,27 @@ class Run:
             groups.setdefault(r.id, []).append(r)
         return groups
 
+    def strip_prefix(self, prefix: str) -> Run:
+        """A copy with ``prefix`` removed from the start of every id and file.
+
+        JSON reports from jest and vitest name files by absolute path while
+        their text reporters use relative ones; stripping the checkout root
+        makes the two diffable.
+        """
+
+        def cut(s: str) -> str:
+            return s[len(prefix) :] if prefix and s.startswith(prefix) else s
+
+        return Run(
+            format=self.format,
+            results=[
+                TestResult(cut(r.id), r.status, cut(r.file), r.duration) for r in self.results
+            ],
+            incomplete=self.incomplete,
+            notes=list(self.notes),
+            summary_total=self.summary_total,
+        )
+
     def to_dict(self) -> dict:
         return {
             "format": self.format,

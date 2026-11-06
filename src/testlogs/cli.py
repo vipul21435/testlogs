@@ -19,8 +19,11 @@ def _read(path: str) -> str:
     return Path(path).read_text(encoding="utf-8", errors="replace")
 
 
-def _load(path: str, fmt: str | None) -> Run:
-    return parse(_read(path), fmt)
+def _load(path: str, fmt: str | None, prefixes: list[str] | None = None) -> Run:
+    run = parse(_read(path), fmt)
+    for prefix in prefixes or []:
+        run = run.strip_prefix(prefix)
+    return run
 
 
 def _print_run(run: Run, as_json: bool) -> None:
@@ -62,6 +65,9 @@ def _print_diff(d, as_json: bool) -> None:
         print("warning: AFTER log is incomplete")
 
 
+_STRIP_HELP = "remove PREFIX from the start of ids and files (repeatable)"
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="testlogs", description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -69,11 +75,18 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("log", help="log file, or - for stdin")
     p.add_argument("--format", choices=FORMATS, default=None)
     p.add_argument("--json", action="store_true")
+    p.add_argument("--strip-prefix", action="append", metavar="PREFIX", help=_STRIP_HELP)
     d = sub.add_parser("diff", help="compare two logs")
     d.add_argument("before")
     d.add_argument("after")
     d.add_argument("--format", choices=FORMATS, default=None, help="apply to both logs")
     d.add_argument("--json", action="store_true")
+    d.add_argument("--strip-prefix", action="append", metavar="PREFIX", help=_STRIP_HELP)
+    d.add_argument(
+        "--fail-on-incomplete",
+        action="store_true",
+        help="exit 3 when either log is truncated or otherwise incomplete",
+    )
     d.add_argument(
         "--normalise-ids",
         action="store_true",
@@ -85,12 +98,14 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     try:
         if args.cmd == "parse":
-            _print_run(_load(args.log, args.format), args.json)
+            _print_run(_load(args.log, args.format, args.strip_prefix), args.json)
             return 0
-        before = _load(args.before, args.format)
-        after = _load(args.after, args.format)
+        before = _load(args.before, args.format, args.strip_prefix)
+        after = _load(args.after, args.format, args.strip_prefix)
         result = diff_runs(before, after, key=normalise_id if args.normalise_ids else None)
         _print_diff(result, args.json)
+        if args.fail_on_incomplete and (result.before_incomplete or result.after_incomplete):
+            return 3
         if args.fail_on_broken and result.broken:
             return 1
         return 0
