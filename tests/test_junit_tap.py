@@ -168,3 +168,41 @@ def test_pytest_teardown_error_testcase_merges_into_its_test():
     assert s["test_fail_and_teardown_error"] is Status.FAILED
     assert s["test_pass_and_teardown_error"] is Status.ERROR
     assert "1 teardown error testcase merged into the testcase before it" in run.notes
+
+
+def test_vitest_tap_brace_blocks_are_headers_not_tests():
+    # Trimmed from a real vitest 4.1.5 --reporter=tap run of unjs/ufo with one test
+    # made to fail. A point ending in "{" names a file or describe block; its tests
+    # follow, indented, up to a "}" at the same indent.
+    text = (FIX / "vitest-tap.log").read_text(encoding="utf-8")
+    assert detect_format(text) == "tap"
+    run = parse(text)
+    assert not run.incomplete, run.notes
+    assert len(run.results) == 7
+    by = {r.id: r for r in run.results}
+    assert by["test/is-same.test.ts > isSamePath > /foo != /bar"].status is Status.FAILED
+    assert by['test/base.test.ts > withBase > "/" + "/"'].duration == 0.00181
+    assert by["test/is-same.test.ts > isSamePath > /%D1%82%D0%B5%D1%81%D1%82 == /тест"]
+    assert run.counts()["passed"] == 6
+
+
+def test_vitest_tap_block_cut_before_its_brace_is_incomplete():
+    text = "TAP version 13\n1..1\nok 1 - f.test.ts {\n    1..1\n    ok 1 - a\n"
+    run = parse(text)
+    assert run.incomplete
+    assert any("never closed" in n for n in run.notes)
+
+
+def test_vitest_tap_empty_block_keeps_its_point():
+    # A file block with no test points (a file that failed to load, say) is kept as a
+    # record, so its failure is not lost.
+    text = (
+        "TAP version 13\n1..2\nnot ok 1 - broken.test.ts {\n}\n"
+        "ok 2 - b.test.ts {\n    1..1\n    ok 1 - t\n}\n"
+    )
+    run = parse(text)
+    assert [(r.id, r.status) for r in run.results] == [
+        ("broken.test.ts", Status.FAILED),
+        ("b.test.ts > t", Status.PASSED),
+    ]
+    assert not run.incomplete

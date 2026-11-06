@@ -19,6 +19,8 @@ _VERSION = re.compile(r"^TAP version \d+")
 _SUBTEST_HEADER = re.compile(r"^\s*# Subtest: (?P<name>.*)$")
 _DURATION_YAML = re.compile(r"^\s*duration_ms:\s*(?P<ms>[\d.]+)")
 _ESCAPE = re.compile(r"\\([\\#])")
+# vitest's TAP reporter writes "# time=1.23ms" after each point.
+_TIME = re.compile(r"\btime=(?P<ms>[\d.]+)ms\b")
 
 
 def _unescape(text: str) -> str:
@@ -58,6 +60,9 @@ def parse(lines: list[str]) -> Run:
     last_indent = 0
     yaml_indent: int | None = None  # inside a "---" ... "..." block at this indent
     yaml_owner: int | None = None
+    # Open "ok N - name {" ... "}" blocks (vitest's TAP reporter), as
+    # (indent, name, status of the opening point, number of results before it).
+    braces: list[tuple[int, str, Status, int]] = []
 
     def close_deeper(indent: int) -> list[_Level]:
         closed = []
@@ -111,6 +116,19 @@ def parse(lines: list[str]) -> Run:
                 headers.pop()
             headers.append((indent, _unescape(m.group("name").strip())))
             continue
+        if line.strip() == "}" and braces and braces[-1][0] == _indent(line):
+            indent, name, status, before = braces.pop()
+            close_deeper(indent)
+            while headers and headers[-1][0] >= indent:
+                headers.pop()
+            if len(run.results) == before:
+                # A block with no test points (a file that failed to load, say):
+                # keep its opening point so the failure is not lost.
+                parents = [n for i, n in headers if i < indent]
+                run.results.append(TestResult(" > ".join([*parents, name]), status))
+                seen_test = True
+            last = None
+            continue
         m = _PLAN.match(line)
         if m:
             indent = len(m.group("indent"))
@@ -121,7 +139,8 @@ def parse(lines: list[str]) -> Run:
                 lo, hi = int(m.group("lo")), int(m.group("hi"))
                 level_at(indent).plan = hi - lo + 1 if hi >= lo else 0
             continue
-        m = _TEST.match(line)
+        opens_block = line.endswith("{")
+        m = _TEST.match(line[:-1].rstrip() if opens_block else line)
         if not m:
             last = None
             continue
@@ -134,6 +153,23 @@ def parse(lines: list[str]) -> Run:
         closed = close_deeper(indent)
         level = level_at(indent)
         level.points += 1
+        directive = _DIRECTIVE.match(m.group("comment") or "")
+        ok = m.group("ok").lower() == "ok"
+        if directive and directive.group("directive").upper() == "SKIP":
+            status = Status.SKIPPED
+        elif directive:
+            status = Status.XPASS if ok else Status.XFAIL
+        else:
+            status = Status.PASSED if ok else Status.FAILED
+        if opens_block:
+            # The point names a file or describe block whose tests follow, indented,
+            # up to a "}" at this indent: a header, not a test.
+            while headers and headers[-1][0] >= indent:
+                headers.pop()
+            headers.append((indent, desc))
+            braces.append((indent, desc, status, len(run.results)))
+            last = None
+            continue
         children = [lv for lv in closed if lv.points]
         if children:
             # This point closes a subtest block: it summarises its children and
@@ -148,20 +184,20 @@ def parse(lines: list[str]) -> Run:
             continue
         parents = [n for i, n in headers if i < indent]
         full = " > ".join([*parents, desc])
-        directive = _DIRECTIVE.match(m.group("comment") or "")
-        ok = m.group("ok").lower() == "ok"
-        if directive and directive.group("directive").upper() == "SKIP":
-            status = Status.SKIPPED
-        elif directive:
-            status = Status.XPASS if ok else Status.XFAIL
-        else:
-            status = Status.PASSED if ok else Status.FAILED
-        run.results.append(TestResult(full, status))
+        t = _TIME.search(m.group("comment") or "")
+        run.results.append(
+            TestResult(full, status, duration=float(t.group("ms")) / 1000.0 if t else None)
+        )
         last = len(run.results) - 1
         last_indent = indent
         seen_test = True
+    if braces:
+        run.incomplete = True
+        run.notes.append(
+            f"{plural(len(braces), 'block')} opened with '{{' and never closed with '}}'"
+        )
     open_children = [lv for lv in levels[1:] if lv.points or lv.plan]
-    if open_children:
+    if open_children and not braces:
         run.incomplete = True
         run.notes.append("a subtest block was never closed by its parent's result line")
     if plan is None:

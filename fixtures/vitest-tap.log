@@ -1,0 +1,29 @@
+TAP version 13
+1..2
+ok 1 - test/base.test.ts # time=6.14ms {
+    1..1
+    ok 1 - withBase # time=4.01ms {
+        1..2
+        ok 1 - "/" + "/" # time=1.81ms
+        ok 2 - "/foo" + "" # time=0.31ms
+    }
+}
+not ok 2 - test/is-same.test.ts # time=9.45ms {
+    1..1
+    not ok 1 - isSamePath # time=8.56ms {
+        1..5
+        ok 1 - /foo == /foo # time=1.98ms
+        ok 2 - /foo == /foo/ # time=0.14ms
+        ok 3 - / ==  # time=0.12ms
+        ok 4 - /%D1%82%D0%B5%D1%81%D1%82 == /тест # time=0.11ms
+        not ok 5 - /foo != /bar # time=5.69ms
+            ---
+            error:
+                name: "AssertionError"
+                message: "expected false to be true // Object.is equality"
+            at: "/work/ufo/repo/test/is-same.test.ts:22:34"
+            actual: "false"
+            expected: "true"
+            ...
+    }
+}

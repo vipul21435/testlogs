@@ -26,6 +26,8 @@ CLOSERS = {
     "nodetest-spec.log": r"^ℹ tests",
     "nodetest-tap.log": r"^1\.\.\d+",
     "mocha-tap.log": r"^1\.\.\d+",
+    # vitest's TAP reporter puts the plan first and closes each file with "}".
+    "vitest-tap.log": r"^\}$",
     "go-v.log": r"^(?:ok|FAIL)\s+\S+\s+[\d.]+s",
     "go-json.log": r'"Action":"(?:pass|fail)","Package":"[^"]*","Elapsed"',
     # cargo and go have no closing line for the whole run, only one per test
