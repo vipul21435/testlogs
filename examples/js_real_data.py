@@ -10,7 +10,7 @@ Usage: uv run python examples/js_real_data.py DATA_DIR [--repeats 9] [--cuts 50]
    ``testcase`` elements and their ``failure`` and ``skipped`` children.
 3. The ids from every reporter of one run are compared with the verbose reporter's,
    and the clean run is diffed against the run with one test made to fail.
-Last, each log is cut at random byte offsets, as in examples/real_data.py.
+Last, each log is cut at random character offsets, as in examples/real_data.py.
 """
 
 from __future__ import annotations
@@ -208,7 +208,7 @@ def main() -> None:
             print(f"    broken: {id_key(test_id)}")
 
     rng = random.Random(args.seed)
-    print(f"\nTruncation: {args.cuts} cuts per log at random byte offsets:")
+    print(f"\nTruncation: {args.cuts} cuts per log at random character offsets:")
     for name, text in texts.items():
         if len(text) < 1000:
             print(f"  {name}: skipped, under 1000 characters")

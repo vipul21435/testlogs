@@ -5,7 +5,7 @@ Usage: uv run python examples/real_data.py DATA_DIR [--repeats 5] [--cuts 50]
 For every log it prints the detected format, the record counts, the log's own
 summary count and the median parse time. Then it diffs every pytest-family log
 against the plain ``-v`` log with ids normalised, and cuts each log at random
-byte offsets to count how many of the cut copies are reported incomplete.
+character offsets to count how many of the cut copies are reported incomplete.
 """
 
 from __future__ import annotations
@@ -95,7 +95,7 @@ def main() -> None:
         )
 
     rng = random.Random(args.seed)
-    print(f"\nTruncation: {args.cuts} cuts per log at random byte offsets:")
+    print(f"\nTruncation: {args.cuts} cuts per log at random character offsets:")
     for name, text in texts.items():
         flagged = 0
         for _ in range(args.cuts):

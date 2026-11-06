@@ -341,14 +341,14 @@ the diff is empty.
 Release diff: `v10.5.0` gives 664 records (663 passed, 1 skipped); against the current
 run, 0 fixed, 0 broken, 119 appeared, 12 vanished, 0 other.
 
-Truncation (same `real_data.py` run): each of the five logs cut at 50 random byte offsets (seed 0): 50 of 50 cut
+Truncation (same `real_data.py` run): each of the five logs cut at 50 random character offsets (seed 0): 50 of 50 cut
 copies of every log are reported incomplete or are rejected as unrecognisable; none is
 read as a complete, smaller run. The test suite also cuts 29 fixture logs at every line
 before their closing line (1,067 cuts) and checks each is incomplete
 (`tests/test_truncation.py`).
 
 Tests: `uv run pytest -q --cov=testlogs` gives 221 passed and 98 % line coverage
-(1458 statements, 29 missed), in 1.1 s on the machine used here while it ran other jobs
+(1458 statements, 29 missed), in 1.1 to 1.2 s on the machine used here while it ran other jobs
 (load average about 8); the same suite passes on Python 3.10.20
 (`uv run --isolated --python 3.10 --with pytest --with-editable . python -m pytest -q`).
 
@@ -381,25 +381,25 @@ Counts are passed/failed/skipped/total. "Summary line" is the runner's own closi
 JSON written by the same run (for a JSON log, its own fields); both are read by `js_real_data.py` with its own
 patterns, not with testlogs; for the JUnit file the summary column counts its
 `testcase` elements. Parse time is the median of 9 calls of `testlogs.parse`; the
-range is over three runs of the script on the same laptop as above (load average
-about 8). A time shown as 0.0 is under 0.05 ms.
+range is over six runs of the script, two sets of three on different occasions, on the
+same laptop as above (load average about 7 to 9). A time shown as 0.0 is under 0.05 ms.
 
 | log | format | lines | records | testlogs counts | summary line | JSON report | agree | parse time (ms) |
 |---|---|---|---|---|---|---|---|---|
 | ms jest default | jest | 18 | 0 | - (summary_total 167) | 167/0/0/167 | 167/0/0/167 | total only | 0.1 |
 | ms jest --verbose | jest | 202 | 167 | 167/0/0/167 | 167/0/0/167 | 167/0/0/167 | yes | 1.5-1.7 |
-| ms jest --json | jest-json | 1 | 167 | 167/0/0/167 | - | 167/0/0/167 | yes | 0.8 |
-| ms jest --verbose, broken | jest | 219 | 167 | 166/1/0/167 | 166/1/0/167 | 166/1/0/167 | yes | 1.6-1.8 |
-| ms jest --json, broken | jest-json | 1 | 167 | 166/1/0/167 | - | 166/1/0/167 | yes | 0.9-1.0 |
+| ms jest --json | jest-json | 1 | 167 | 167/0/0/167 | - | 167/0/0/167 | yes | 0.8-1.0 |
+| ms jest --verbose, broken | jest | 219 | 167 | 166/1/0/167 | 166/1/0/167 | 166/1/0/167 | yes | 1.6-2.1 |
+| ms jest --json, broken | jest-json | 1 | 167 | 166/1/0/167 | - | 166/1/0/167 | yes | 0.9-1.2 |
 | ufo vitest default | vitest | 9 | 0 | - (summary_total 489) | 489/0/0/489 | 489/0/0/489 | total only | 0.0 |
-| ufo vitest verbose | vitest | 498 | 489 | 489/0/0/489 | 489/0/0/489 | 489/0/0/489 | yes | 7.8-8.1 |
-| ufo vitest tap | tap | 653 | 489 | 489/0/0/489 | - | 489/0/0/489 | yes | 8.7-9.0 |
-| ufo vitest tap-flat | tap | 491 | 489 | 489/0/0/489 | - | 489/0/0/489 | yes | 10.1-10.2 |
-| ufo vitest junit | junit | 1,007 | 489 | 489/0/0/489 | 489/0/0/489 | 489/0/0/489 | yes | 2.2-2.3 |
-| ufo vitest json | jest-json | 1 | 489 | 489/0/0/489 | - | 489/0/0/489 | yes | 1.8-1.9 |
-| ufo vitest verbose, broken | vitest | 521 | 489 | 488/1/0/489 | 488/1/0/489 | 488/1/0/489 | yes | 7.9-8.4 |
-| ufo vitest tap, broken | tap | 661 | 489 | 488/1/0/489 | - | 488/1/0/489 | yes | 8.7-9.8 |
-| ufo vitest json, broken | jest-json | 1 | 489 | 488/1/0/489 | - | 488/1/0/489 | yes | 1.7-1.9 |
+| ufo vitest verbose | vitest | 498 | 489 | 489/0/0/489 | 489/0/0/489 | 489/0/0/489 | yes | 7.8-9.8 |
+| ufo vitest tap | tap | 653 | 489 | 489/0/0/489 | - | 489/0/0/489 | yes | 8.7-10.4 |
+| ufo vitest tap-flat | tap | 491 | 489 | 489/0/0/489 | - | 489/0/0/489 | yes | 10.1-12.1 |
+| ufo vitest junit | junit | 1,007 | 489 | 489/0/0/489 | 489/0/0/489 | 489/0/0/489 | yes | 2.2-2.6 |
+| ufo vitest json | jest-json | 1 | 489 | 489/0/0/489 | - | 489/0/0/489 | yes | 1.8-2.5 |
+| ufo vitest verbose, broken | vitest | 521 | 489 | 488/1/0/489 | 488/1/0/489 | 488/1/0/489 | yes | 7.9-9.9 |
+| ufo vitest tap, broken | tap | 661 | 489 | 488/1/0/489 | - | 488/1/0/489 | yes | 8.7-10.5 |
+| ufo vitest json, broken | jest-json | 1 | 489 | 488/1/0/489 | - | 488/1/0/489 | yes | 1.7-2.2 |
 
 None of the logs is reported incomplete. The default reporters of jest 30 and of
 vitest 4 (when not writing to a terminal) name no passing test, so those two logs give
@@ -429,9 +429,9 @@ The one-line edits: in each of the five pairs compared (jest verbose and JSON; v
 verbose, `tap` and JSON) the diff of the clean run against the edited run is 0 fixed, 1 broken, 0 appeared, 0 vanished, 0 other, and the broken test is the one
 edited (`src/index.test.ts > ms(string) > should preserve ms` and
 `test/is-same.test.ts > isSamePath > /foo != /bar`). Each of the 12 logs over 1,000
-characters cut at 50 random byte offsets (seed 0): 50 of 50 cut copies of every log
-are reported incomplete or rejected. `js_real_data.sh` took 40 s here, with the clones
-and npm's package cache already in place.
+characters cut at 50 random character offsets (seed 0): 50 of 50 cut copies of every log
+are reported incomplete or rejected. `js_real_data.sh` took 30 s and 40 s in two runs here, with the
+clones and npm's package cache already in place.
 
 ## Limitations
 
