@@ -62,6 +62,11 @@ _FINAL = re.compile(
     r"^=+ .*\b(?:passed|failed|error|errors|skipped|xfailed|xpassed|no tests ran)\b"
     r".* in [\d.]+s.* =+$"
 )
+# With -q the final line has no "=" border: "2 failed, 8 passed, 1 error in 0.03s".
+_FINAL_QUIET = re.compile(
+    r"^(?:\d+ [a-z]+(?: [a-z]+)?|no tests ran)(?:, \d+ [a-z]+(?: [a-z]+)?)* in [\d.]+s"
+    r"(?: \([\d:]+\))?$"
+)
 _DURATION = re.compile(r"^(?P<secs>\d+\.\d+)s\s+(?:call|setup|teardown)\s+(?P<id>\S.*)$")
 
 
@@ -114,7 +119,7 @@ def parse(lines: list[str]) -> Run:
         if _SUMMARY_HEADER.match(line):
             in_summary = True
             continue
-        if _FINAL.match(line):
+        if _FINAL.match(line) or _FINAL_QUIET.match(line):
             complete = True
             in_summary = False
             for m in _SUBTEST_COUNT.finditer(line):

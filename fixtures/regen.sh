@@ -20,6 +20,8 @@ $P -q --junitxml=fixtures/junit-after.xml $S > /dev/null 2>&1
 # A colour run with progress output, to exercise ANSI stripping.
 uv run --no-sync python -m pytest -p no:cacheprovider --color=yes -v $S \
   > fixtures/pytest-v-color.log 2>&1
+# -q prints dots and only names failures; its final line has no "=" border.
+$P -q $S > fixtures/pytest-q-after.log 2>&1
 # -s lets test output split a verbose line; -n 2 (pytest-xdist) interleaves two workers.
 $P -v -s $S > fixtures/pytest-v-s.log 2>&1
 uv run --no-sync --with pytest-xdist==3.8.0 python -m pytest -p no:cacheprovider --color=no \

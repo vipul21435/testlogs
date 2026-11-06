@@ -108,3 +108,14 @@ def test_xdist_start_lines_are_not_records():
         ("t/test_a.py::test_y", Status.PASSED),
         ("t/test_a.py::test_x[a b]", Status.FAILED),
     ]
+
+
+def test_quiet_log_is_complete_and_names_only_failures():
+    text = (FIX / "pytest-q-after.log").read_text(encoding="utf-8")
+    assert detect_format(text) == "pytest"
+    run = parse(text)
+    assert not run.incomplete
+    assert {r.status for r in run.results} == {Status.FAILED, Status.ERROR}
+    assert run.summary_total == 14
+    lines = text.rstrip("\n").split("\n")
+    assert parse("\n".join(lines[:-1]), "pytest").incomplete
