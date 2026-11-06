@@ -157,3 +157,14 @@ def test_tap_yaml_block_lines_are_not_tests():
     run = parse(text)
     assert [r.id for r in run.results] == ["a"]
     assert not run.incomplete
+
+
+def test_pytest_teardown_error_testcase_merges_into_its_test():
+    # pytest writes a second <testcase> for a test that fails and then errors in
+    # teardown; the -v parser records that test once, as failed.
+    run = parse((FIX / "junit-tricky.xml").read_text(encoding="utf-8"), fmt="junit")
+    s = {r.id.rsplit("::", 1)[1]: r.status for r in run.results}
+    assert len(run.results) == 9
+    assert s["test_fail_and_teardown_error"] is Status.FAILED
+    assert s["test_pass_and_teardown_error"] is Status.ERROR
+    assert "1 teardown error testcase merged into the testcase before it" in run.notes

@@ -1,4 +1,10 @@
-"""JUnit XML, as written by pytest, surefire, and most JS and Go reporters."""
+"""JUnit XML, as written by pytest, surefire, and most JS and Go reporters.
+
+pytest writes a second ``<testcase>`` with the same name for a test that fails and
+then errors in teardown (``<error message="failed on teardown ...">``). That
+testcase is merged into the one before it, failed over error, as the ``-v`` parser
+does, so the two formats give one record per test. Other repeated names are kept.
+"""
 
 from __future__ import annotations
 
@@ -38,6 +44,7 @@ def parse(text: str) -> Run:
         run.notes.append(f"XML does not parse: {exc}")
         return run
     odd_times = 0
+    merged = 0
     for case in root.iter("testcase"):
         name = case.get("name", "")
         classname = case.get("classname", "")
@@ -53,7 +60,24 @@ def parse(text: str) -> Run:
             if duration is None or not math.isfinite(duration) or duration < 0:
                 odd_times += 1
                 duration = None
+        error = case.find("error")
+        prev = run.results[-1] if run.results else None
+        if (
+            prev is not None
+            and prev.id == tid
+            and error is not None
+            and error.get("message", "").startswith("failed on teardown")
+        ):
+            status = Status.FAILED if prev.status is Status.FAILED else Status.ERROR
+            total = None if prev.duration is None else prev.duration + (duration or 0.0)
+            run.results[-1] = TestResult(tid, status, prev.file, total)
+            merged += 1
+            continue
         run.results.append(TestResult(tid, _status(case), file, duration))
+    if merged:
+        run.notes.append(
+            f"{plural(merged, 'teardown error testcase')} merged into the testcase before it"
+        )
     if odd_times:
         run.notes.append(
             f"{plural(odd_times, 'testcase')} with a time that is not a finite number of "
