@@ -55,3 +55,42 @@ def test_xdist_and_bare_status_reasons_holding_parentheses():
 
 def _run_text(text: str):
     return parse(text, fmt="pytest")
+
+
+def test_captured_inner_session_adds_no_records():
+    run = _run("pytest-v-pytester.log")
+    assert not run.incomplete
+    assert [(r.id.rsplit("::", 1)[1], r.status.value) for r in run.results] == [
+        ("test_inner_run", "failed"),
+        ("test_other", "passed"),
+    ]
+    assert run.summary_total == 2
+
+
+def test_log_cut_after_a_captured_final_line_is_incomplete():
+    run = _run("pytest-v-pytester-cut.log")
+    assert run.incomplete
+    assert len(run.results) == 2
+
+
+def test_printed_pytest_lines_in_captured_output_are_not_tests():
+    run = _run("pytest-v-tricky.log")
+    assert not any("test_phantom" in r.id for r in run.results)
+    cut = "\n".join((FIX / "pytest-v-tricky.log").read_text().splitlines()[:-3])
+    assert _run_text(cut).incomplete
+
+
+def test_warnings_summary_ends_a_captured_section():
+    text = (
+        "============================= test session starts ==============================\n"
+        "a.py::test_x FAILED [100%]\n"
+        "=================================== FAILURES ===================================\n"
+        "a.py::test_fake PASSED\n"
+        "=============================== warnings summary ===============================\n"
+        "a.py::test_x\n  a.py:3: UserWarning: w\n"
+        "========================= 1 failed, 1 warning in 0.01s =========================\n"
+        "make: *** [test] Error 1\n"
+    )
+    run = _run_text(text)
+    assert not run.incomplete
+    assert [r.id for r in run.results] == ["a.py::test_x"]

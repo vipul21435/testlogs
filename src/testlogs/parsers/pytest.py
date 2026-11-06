@@ -10,6 +10,9 @@ The final ``==== 3 passed in 0.02s ====`` line marks a complete log; without
 it the run is reported incomplete. pytest prints the final line even after a run
 stops early, so a ``!!! KeyboardInterrupt !!!`` or ``!!! Interrupted: ... !!!``
 banner also makes the run incomplete, and the test that was running is named.
+Lines inside the FAILURES, ERRORS and PASSES sections are captured output, and a
+whole pytest session printed by a test (pytester) is skipped from its
+``test session starts`` line to its own final line.
 
 Measured with pytest 9.2, pytest reports ``unittest`` subtests: the parent test is
 still printed ``PASSED`` and each failing subtest gets a ``SUBFAILED(i=1) node::id`` summary row.
@@ -64,6 +67,16 @@ _FINAL_COUNT = re.compile(
     r"(?P<n>\d+) (?P<sub>subtests? )?(?P<what>passed|failed|skipped|xfailed|xpassed|errors?)\b"
 )
 _SUMMARY_HEADER = re.compile(r"^=+ short test summary info =+$")
+_SESSION_START = re.compile(r"^=+ test session starts =+$")
+# Sections that hold tracebacks and captured output, which can contain lines shaped
+# like pytest's own (a test that runs pytest itself, or prints such lines).
+# The warnings summary is pytest's own text, so it ends a section, like the
+# durations and short summary headers. Inside a section a final line counts only as
+# the log's last line (with -rN no summary header follows the tracebacks).
+_SECTION = re.compile(r"^=+ (?:FAILURES|ERRORS|PASSES|XFAILURES|XPASSES) =+$")
+_SECTION_END = re.compile(
+    r"^=+ (?:short test summary info|warnings summary|slowest .*durations.*) =+$"
+)
 _FINAL = re.compile(
     r"^=+ .*\b(?:passed|failed|error|errors|skipped|xfailed|xpassed|no tests ran)\b"
     r".* in [\d.]+s.* =+$"
@@ -163,10 +176,34 @@ def parse(lines: list[str]) -> Run:
     interrupted: list[str] = []
     unfinished: str | None = None  # the test running when the run was interrupted
     collected: int | None = None
-    for raw in lines:
+    last = max((i for i, ln in enumerate(lines) if ln.strip()), default=-1)
+    seen_session = False
+    depth = 0  # pytest sessions nested in captured output
+    in_section = False
+    for idx, raw in enumerate(lines):
         line = raw.rstrip()
         if not line:
             continue
+        if _SESSION_START.match(line):
+            if seen_session:
+                depth += 1
+            seen_session = True
+            continue
+        if depth:
+            if _FINAL.match(line) or _FINAL_QUIET.match(line):
+                depth -= 1
+            continue
+        if _SECTION.match(line):
+            in_section = True
+            pending = None
+            continue
+        if in_section:
+            if _SECTION_END.match(line):
+                in_section = False
+            elif (_FINAL.match(line) or _FINAL_QUIET.match(line)) and idx == last:
+                in_section = False
+            elif not _INTERRUPT.match(line):
+                continue
         m = _INTERRUPT.match(line)
         if m:
             interrupted.append(m.group("what"))
