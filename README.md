@@ -210,16 +210,16 @@ bash examples/real_data.sh DATA_DIR              # clone, run the suite, write D
 uv run python examples/real_data.py DATA_DIR     # parse, time, cross-check
 ```
 
-Parse times are the median of 9 calls of `testlogs.parse` on a macOS laptop
-(`real_data.py DATA_DIR --repeats 9`); repeated runs moved them by up to about a third.
+Parse time is the median of 9 calls of `testlogs.parse` on a macOS laptop
+(`real_data.py DATA_DIR --repeats 9`); the range is over three such runs.
 
-| log | format | size | lines | records | passed | summary count | incomplete | parse time |
+| log | format | size | lines | records | passed | summary count | incomplete | parse time (ms) |
 |---|---|---|---|---|---|---|---|---|
-| pytest -v | pytest | 0.07 MB | 863 | 771 | 771 | 771 | no | 5.2 ms |
-| pytest -v, colour | pytest | 0.08 MB | 863 | 771 | 771 | 771 | no | 6.1 ms |
-| pytest -v -rA --durations=0 | pytest | 2.01 MB | 23,047 | 771 | 771 | 771 | no | 180.7 ms |
-| pytest --junitxml | junit | 0.07 MB | 1 | 771 | 771 | - | no | 1.3 ms |
-| python -m unittest -v | unittest | 0.08 MB | 1,231 | 935 | 935 | 935 | no | 4.5 ms |
+| pytest -v | pytest | 0.07 MB | 863 | 771 | 771 | 771 | no | 5.2-6.1 |
+| pytest -v, colour | pytest | 0.08 MB | 863 | 771 | 771 | 771 | no | 6.2-7.0 |
+| pytest -v -rA --durations=0 | pytest | 2.01 MB | 23,047 | 771 | 771 | 771 | no | 149-160 |
+| pytest --junitxml | junit | 0.07 MB | 1 | 771 | 771 | - | no | 1.3-1.5 |
+| python -m unittest -v | unittest | 0.08 MB | 1,231 | 935 | 935 | 935 | no | 4.5-4.9 |
 
 The `-rA` log is large because the suite runs 21,203 subtests and `-rA` prints a row for
 each passing one; testlogs counts them in a note and gives them no records.
