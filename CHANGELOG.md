@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- pytest: a summary row's id is no longer cut at a ` - ` inside the parameter brackets
+  (`test_p[a - b]` gave a second, phantom record `test_p[a`).
+- TAP: names with an escaped `\#` are read instead of dropped, a `#` comment that is not
+  `SKIP` or `TODO` no longer drops the line, each indented subtest plan is checked, and
+  a suite's `duration_ms` no longer overwrites its last child's duration.
+- TAP: lines inside a YAML block are not read as test points, and subtests without a
+  `# Subtest:` header take their parent's name.
+- Notes use the singular for a count of one; the CLI help has a plain description.
+- `examples/real_data.sh` stops when a clone or install fails; the node sample's
+  `package-lock.json` is committed.
+
 ## 0.1.0
 
 First version.
