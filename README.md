@@ -294,22 +294,23 @@ the time; the range is over three such runs, and other machines will differ.
 
 | log | format | size | lines | records | passed | summary count | incomplete | parse time (ms) |
 |---|---|---|---|---|---|---|---|---|
-| pytest -v | pytest | 0.07 MB | 863 | 771 | 771 | 771 | no | 7.7-9.6 |
-| pytest -v, colour | pytest | 0.08 MB | 863 | 771 | 771 | 771 | no | 8.7-10.6 |
-| pytest -v -rA --durations=0 | pytest | 2.01 MB | 23,046 | 771 | 771 | 771 | no | 94-134 |
-| pytest --junitxml | junit | 0.07 MB | 1 | 771 | 771 | - | no | 1.4-1.7 |
-| python -m unittest -v | unittest | 0.08 MB | 1,231 | 935 | 935 | 935 | no | 6.3-9.3 |
+| pytest -v | pytest | 0.07 MB | 863 | 771 | 771 | 771 | no | 7.7-8.4 |
+| pytest -v, colour | pytest | 0.08 MB | 863 | 771 | 771 | 771 | no | 8.7-9.6 |
+| pytest -v -rA --durations=0 | pytest | 2.01 MB | 23,046 | 771 | 771 | 771 | no | 97-105 |
+| pytest --junitxml | junit | 0.07 MB | 1 | 771 | 771 | - | no | 1.4-1.5 |
+| python -m unittest -v | unittest | 0.08 MB | 1,231 | 935 | 935 | 935 | no | 6.3-6.7 |
 
 The `-rA` log is large because the suite runs 21,203 subtests and `-rA` prints a row for
-each passing one; testlogs counts them in a note and gives them no records. Its size
-and line count change a little from run to run, because `--durations=0` leaves out
-timings under 0.005 s and which rows fall under that depends on timing; the record
-counts do not change. Three runs of `real_data.sh` here gave 23,047, 23,047 and 23,046
-lines, at 2,014,406, 2,014,399 and 2,014,332 bytes; the table is from the third.  Parse times move with machine load (an
-earlier table here gave 200-228 ms for the `-rA` log). Timed back to back on the same
-`-rA` log, twice, the code at `aaf35e9` took 146 and 148 ms and the current code 96 ms
-both times (medians of 9 calls): the PASSES section, most of that log, is no longer
-matched against result patterns line by line. The JUnit file is one line with no final newline.
+each passing one; testlogs counts them in a note and gives them no records. Its size and
+line count change a little from run to run, because `--durations=0` leaves out timings
+under 0.005 s and which rows fall under that depends on timing; the record counts do not
+change. Three runs of `real_data.sh` here gave 23,047, 23,047 and 23,046 lines, at
+2,014,406, 2,014,399 and 2,014,332 bytes; the table is from the third. Parse times move
+with machine load (an earlier table here gave 200-228 ms for the `-rA` log). Timed back
+to back on the same `-rA` log, twice, the code at `aaf35e9` took 151 and 147 ms and the
+current code 101 and 102 ms (medians of 9 calls): the PASSES section, most of that log,
+is no longer matched against result patterns line by line. The JUnit file is one line
+with no final newline.
 
 Cross-checks, with `diff_runs(..., key=normalise_id)` against the plain `-v` log: the
 colour, `-rA` and JUnit logs give 0 fixed, 0 broken, 0 appeared, 0 vanished, 0 other.
@@ -330,12 +331,12 @@ run, 0 fixed, 0 broken, 119 appeared, 12 vanished, 0 other.
 
 Truncation (same `real_data.py` run): each of the five logs cut at 50 random byte offsets (seed 0): 50 of 50 cut
 copies of every log are reported incomplete or are rejected as unrecognisable; none is
-read as a complete, smaller run. The test suite also cuts 14 fixture logs at every line
-before their closing line (565 cuts) and checks each is incomplete
+read as a complete, smaller run. The test suite also cuts 24 fixture logs at every line
+before their closing line (914 cuts) and checks each is incomplete
 (`tests/test_truncation.py`).
 
-Tests: `uv run pytest -q --cov=testlogs` gives 176 passed and 97 % line coverage
-(1308 statements, 33 missed), in under a second on the machine used here; the same suite
+Tests: `uv run pytest -q --cov=testlogs` gives 187 passed and 97 % line coverage
+(1317 statements, 33 missed), in under a second on the machine used here; the same suite
 passes on Python 3.10.20
 (`uv run --isolated --python 3.10 --with pytest --with-editable . python -m pytest -q`).
 
