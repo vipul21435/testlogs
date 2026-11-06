@@ -1,0 +1,28 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.2.0, pluggy-1.7.0 -- /home/user/.cache/uv/builds-v0/.tmp4aGfn1/bin/python
+rootdir: /work
+configfile: pyproject.toml
+plugins: rerunfailures-16.1, cov-7.1.0
+collecting ... collected 3 items
+
+fixtures/rerun_sample/test_rerun.py::test_flaky_then_passes RERUN        [ 33%]
+fixtures/rerun_sample/test_rerun.py::test_flaky_then_passes PASSED       [ 33%]
+fixtures/rerun_sample/test_rerun.py::test_always_fails RERUN             [ 66%]
+fixtures/rerun_sample/test_rerun.py::test_always_fails RERUN             [ 66%]
+fixtures/rerun_sample/test_rerun.py::test_always_fails FAILED            [ 66%]
+fixtures/rerun_sample/test_rerun.py::test_steady PASSED                  [100%]
+
+=================================== FAILURES ===================================
+______________________________ test_always_fails _______________________________
+
+    def test_always_fails():
+>       assert 1 + 1 == 3
+E       assert (1 + 1) == 3
+
+fixtures/rerun_sample/test_rerun.py:12: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED fixtures/rerun_sample/test_rerun.py::test_flaky_then_passes
+PASSED fixtures/rerun_sample/test_rerun.py::test_steady
+FAILED fixtures/rerun_sample/test_rerun.py::test_always_fails - assert (1 + 1...
+===================== 1 failed, 2 passed, 3 rerun in 0.02s =====================

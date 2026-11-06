@@ -26,6 +26,9 @@ $P -q $S > fixtures/pytest-q-after.log 2>&1
 $P -v -s $S > fixtures/pytest-v-s.log 2>&1
 uv run --no-sync --with pytest-xdist==3.8.0 python -m pytest -p no:cacheprovider --color=no \
   -v -n 2 $S > fixtures/pytest-xdist.log 2>&1
+# pytest-rerunfailures: a test that passes on its second call, one that never does.
+uv run --no-sync --with pytest-rerunfailures==16.1 python -m pytest -p no:cacheprovider \
+  --color=no -v -rA --reruns 2 fixtures/rerun_sample > fixtures/pytest-rerun.log 2>&1
 # A truncated tail: the first 12 lines of the verbose log.
 head -n 12 fixtures/pytest-v-after.log > fixtures/pytest-v-truncated.log
 

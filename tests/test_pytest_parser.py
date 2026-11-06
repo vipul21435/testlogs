@@ -119,3 +119,16 @@ def test_quiet_log_is_complete_and_names_only_failures():
     assert run.summary_total == 14
     lines = text.rstrip("\n").split("\n")
     assert parse("\n".join(lines[:-1]), "pytest").incomplete
+
+
+def test_rerun_lines_are_counted_not_recorded():
+    run = parse((FIX / "pytest-rerun.log").read_text(encoding="utf-8"))
+    assert not run.incomplete
+    by = {r.id.rsplit("::", 1)[1]: r.status for r in run.results}
+    assert by == {
+        "test_flaky_then_passes": Status.PASSED,
+        "test_always_fails": Status.FAILED,
+        "test_steady": Status.PASSED,
+    }
+    assert run.summary_total == 3
+    assert any("1 passed only on a rerun" in n and "test_flaky_then_passes" in n for n in run.notes)

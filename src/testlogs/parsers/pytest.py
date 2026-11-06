@@ -40,6 +40,8 @@ _SUMMARY = re.compile(
     r"^(?P<status>PASSED|FAILED|SKIPPED|ERROR|XFAIL|XPASS)\s+"
     r"(?:\[\d+\]\s+)?(?P<id>\S+?(?:::\S.*?|:\d+)?)(?:\s+-\s+.*)?$"
 )
+# pytest-rerunfailures prints "path::id RERUN [ 33%]" before each repeat.
+_RERUN = re.compile(r"^(?P<id>\S+?::\S.*?)\s+RERUN(?:\s+\[\s*\d+%\])?\s*$")
 # pytest-xdist: "[gw1] [ 42%] PASSED path::id". Workers finish in any order.
 _XDIST = re.compile(
     r"^\[gw\d+\] \[\s*\d+%\] (?P<status>PASSED|FAILED|SKIPPED|ERROR|XFAIL|XPASS) (?P<id>\S+?::.+?)"
@@ -112,6 +114,7 @@ def parse(lines: list[str]) -> Run:
     in_summary = False
     complete = False
     pending: str | None = None  # an id whose status has not been printed yet
+    reruns: dict[str, int] = {}
     for raw in lines:
         line = raw.rstrip()
         if not line:
@@ -143,6 +146,11 @@ def parse(lines: list[str]) -> Run:
             if m:
                 tid = m.group("id")
                 summary.append(TestResult(tid, _STATUS_WORDS[m.group("status")], _file_of(tid)))
+            continue
+        m = _RERUN.match(line)
+        if m:
+            reruns[m.group("id")] = reruns.get(m.group("id"), 0) + 1
+            pending = None
             continue
         m = _XDIST.match(line) or _VERBOSE.match(line)
         if m:
@@ -189,6 +197,12 @@ def parse(lines: list[str]) -> Run:
             f"{n} failing subtests in {len(subfailed)} tests: those tests are recorded as failed"
         )
     run.results = [TestResult(i, status[i], _file_of(i), durations.get(i)) for i in order]
+    if reruns:
+        passed_late = [i for i in reruns if status.get(i) is Status.PASSED]
+        note = f"{len(reruns)} tests were rerun ({sum(reruns.values())} reruns)"
+        if passed_late:
+            note += f"; {len(passed_late)} passed only on a rerun: {', '.join(passed_late)}"
+        run.notes.append(note)
     if final_total is not None:
         # pytest counts each failing subtest as one "failed" on top of its test.
         run.summary_total = final_total - sum(subfailed.values())
