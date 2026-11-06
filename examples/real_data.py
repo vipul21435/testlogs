@@ -28,6 +28,11 @@ def _median_seconds(text: str, repeats: int) -> float:
     return statistics.median(times)
 
 
+def _line_count(text: str) -> int:
+    """Lines as an editor counts them: a last line without a newline still counts."""
+    return text.count("\n") + (1 if text and not text.endswith("\n") else 0)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("data_dir", type=Path)
@@ -50,7 +55,7 @@ def main() -> None:
         secs = _median_seconds(text, args.repeats)
         print(
             f"| {name} | {run.format} | {len(text.encode()) / 1e6:.2f} MB "
-            f"| {text.count(chr(10))} | {len(run.results)} | {c['passed']} | {c['failed']} "
+            f"| {_line_count(text)} | {len(run.results)} | {c['passed']} | {c['failed']} "
             f"| {run.summary_total} | {run.incomplete} | {secs * 1000:.1f} ms |"
         )
 

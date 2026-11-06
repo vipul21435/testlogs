@@ -220,19 +220,24 @@ bash examples/real_data.sh DATA_DIR              # clone, run the suite, write D
 uv run python examples/real_data.py DATA_DIR     # parse, time, cross-check
 ```
 
-Parse time is the median of 9 calls of `testlogs.parse` on a macOS laptop
-(`real_data.py DATA_DIR --repeats 9`); the range is over three such runs.
+The table is the output of `real_data.py DATA_DIR --repeats 9`. Parse time is the
+median of 9 calls of `testlogs.parse` on a macOS laptop that was running other jobs at
+the time; the range is over three such runs, and other machines will differ.
 
 | log | format | size | lines | records | passed | summary count | incomplete | parse time (ms) |
 |---|---|---|---|---|---|---|---|---|
-| pytest -v | pytest | 0.07 MB | 863 | 771 | 771 | 771 | no | 5.2-6.1 |
-| pytest -v, colour | pytest | 0.08 MB | 863 | 771 | 771 | 771 | no | 6.2-7.0 |
-| pytest -v -rA --durations=0 | pytest | 2.01 MB | 23,047 | 771 | 771 | 771 | no | 149-160 |
-| pytest --junitxml | junit | 0.07 MB | 1 | 771 | 771 | - | no | 1.3-1.5 |
-| python -m unittest -v | unittest | 0.08 MB | 1,231 | 935 | 935 | 935 | no | 4.5-4.9 |
+| pytest -v | pytest | 0.07 MB | 863 | 771 | 771 | 771 | no | 6.3-8.8 |
+| pytest -v, colour | pytest | 0.08 MB | 863 | 771 | 771 | 771 | no | 7.4-10.6 |
+| pytest -v -rA --durations=0 | pytest | 2.01 MB | 23,047 | 771 | 771 | 771 | no | 200-228 |
+| pytest --junitxml | junit | 0.07 MB | 1 | 771 | 771 | - | no | 1.7-2.0 |
+| python -m unittest -v | unittest | 0.08 MB | 1,231 | 935 | 935 | 935 | no | 5.8-6.8 |
 
 The `-rA` log is large because the suite runs 21,203 subtests and `-rA` prints a row for
-each passing one; testlogs counts them in a note and gives them no records.
+each passing one; testlogs counts them in a note and gives them no records. Its size
+and line count change a little from run to run, because `--durations=0` leaves out
+timings under 0.005 s and which rows fall under that depends on timing; the record
+counts do not change. Two runs of `real_data.sh` here gave 23,047 lines both times, at
+2,014,406 and 2,014,399 bytes. The JUnit file is one line with no final newline.
 
 Cross-checks, with `diff_runs(..., key=normalise_id)` against the plain `-v` log: the
 colour, `-rA` and JUnit logs give 0 fixed, 0 broken, 0 appeared, 0 vanished, 0 other.
