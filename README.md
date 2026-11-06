@@ -247,8 +247,8 @@ read as a complete, smaller run. The test suite also cuts 14 fixture logs at eve
 before their closing line (565 cuts) and checks each is incomplete
 (`tests/test_truncation.py`).
 
-Tests: `uv run pytest -q --cov=testlogs` gives 118 passed and 96 % line coverage
-(1013 statements, 38 missed) in 0.31 s; the same suite passes on Python 3.10.
+Tests: `uv run pytest -q --cov=testlogs` gives 125 passed and 97 % line coverage
+(1013 statements, 32 missed) in 0.38 s; the same suite passes on Python 3.10.
 
 ## Limitations
 
