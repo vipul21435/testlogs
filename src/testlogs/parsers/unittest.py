@@ -43,10 +43,19 @@ def _status(result: str) -> Status:
     return _RESULTS[key]
 
 
-def _file_of(qual: str) -> str:
-    # pkg.mod.Class.test_x -> pkg/mod.py is a guess; keep the dotted module instead.
-    parts = qual.split(".")
-    return ".".join(parts[:-2]) if len(parts) > 2 else ""
+def _ident(name: str, qual: str) -> tuple[str, str]:
+    """Return (id, file) for a ``name (qual)`` pair.
+
+    Python 3.11+ prints ``test_x (pkg.mod.Class.test_x)``; 3.10 prints
+    ``test_x (pkg.mod.Class)``; a doctest prints ``func (pkg.mod)``. The id is
+    always ``qual`` ending in ``name``. The file is the dotted module: the class
+    is dropped for ``test*`` methods, while a doctest's ``qual`` is the module.
+    """
+    tid = qual if qual == name or qual.endswith("." + name) else f"{qual}.{name}"
+    owner = tid[: -len(name) - 1] if tid.endswith("." + name) else ""
+    if name.startswith("test") and "." in owner:
+        owner = owner.rsplit(".", 1)[0]
+    return tid, owner
 
 
 def parse(lines: list[str]) -> Run:
@@ -63,21 +72,21 @@ def parse(lines: list[str]) -> Run:
             continue
         m = _SUB.match(line)
         if m:
-            tid = m.group("qual")
+            tid, file = _ident(m.group("name"), m.group("qual"))
             status = _status(m.group("result"))
             if status is not Status.SKIPPED and tid not in sub_failed:
                 sub_failed[tid] = status
-                run.results.append(TestResult(tid, status, _file_of(tid)))
+                run.results.append(TestResult(tid, status, file))
             pending = None
             continue
         m = _HEAD.match(line)
         if m:
-            tid = m.group("qual")
+            tid, file = _ident(m.group("name"), m.group("qual"))
             if m.group("result"):
-                run.results.append(TestResult(tid, _status(m.group("result")), _file_of(tid)))
+                run.results.append(TestResult(tid, _status(m.group("result")), file))
                 pending = None
             else:
-                pending = (tid, _file_of(tid))
+                pending = (tid, file)
             continue
         if pending is not None:
             m = _TAIL.match(line)

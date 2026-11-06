@@ -34,3 +34,21 @@ def test_unittest_truncated_is_incomplete():
     assert run.incomplete
     assert len(run.results) == 4
     assert "Ran N tests" in run.notes[0]
+
+
+def test_python310_and_doctest_lines_get_distinct_ids():
+    text = (
+        "test_a (pkg.mod.Case) ... ok\n"
+        "test_b (pkg.mod.Case) ... FAIL\n"
+        "adjacent (pkg.more) ... ok\n"
+        "chunked (pkg.more) ... ok\n\n"
+        "Ran 4 tests in 0.001s\n\nFAILED (failures=1)\n"
+    )
+    run = parse(text, fmt="unittest")
+    assert [(r.id, r.file) for r in run.results] == [
+        ("pkg.mod.Case.test_a", "pkg.mod"),
+        ("pkg.mod.Case.test_b", "pkg.mod"),
+        ("pkg.more.adjacent", "pkg.more"),
+        ("pkg.more.chunked", "pkg.more"),
+    ]
+    assert not [n for n in run.notes if "summary counts" in n]
