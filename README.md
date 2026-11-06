@@ -22,8 +22,9 @@ two runs are compared.
 pip install git+https://github.com/vipul21435/testlogs
 ```
 
-No runtime dependencies. Development: `uv venv --python 3.12 .venv`, then
-`uv pip install -e ".[dev]"` and `uv run pytest -q`.
+No runtime dependencies. The package ships `py.typed` and passes
+`uv run --with mypy mypy --strict src`. Development: `uv venv --python 3.12 .venv`,
+then `uv pip install -e ".[dev]"` and `uv run pytest -q`.
 
 ## Quickstart
 

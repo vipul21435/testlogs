@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-from testlogs.diff import diff_runs
+from testlogs.diff import RunDiff, diff_runs
 from testlogs.ids import normalise_id
 from testlogs.models import Run
 from testlogs.parsers import FORMATS, parse
@@ -41,7 +41,7 @@ def _print_run(run: Run, as_json: bool) -> None:
         print(f"   note: {note}")
 
 
-def _print_diff(d, as_json: bool) -> None:
+def _print_diff(d: RunDiff, as_json: bool) -> None:
     if as_json:
         print(json.dumps(d.to_dict(), indent=2))
         return

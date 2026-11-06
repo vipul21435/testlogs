@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import enum
 from dataclasses import dataclass, field
+from typing import Any
 
 
 class Status(str, enum.Enum):
@@ -32,7 +33,7 @@ class TestResult:
     file: str = ""
     duration: float | None = None
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "file": self.file,
@@ -86,7 +87,7 @@ class Run:
             summary_total=self.summary_total,
         )
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "format": self.format,
             "incomplete": self.incomplete,

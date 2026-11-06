@@ -96,5 +96,6 @@ def _parse(text: str, fmt: str | None) -> Run:
         return gotest.parse_json(lines)
     for name, mod in _LINE_PARSERS:
         if fmt == name:
-            return mod.parse(lines)
+            run: Run = mod.parse(lines)
+            return run
     raise ValueError(f"unknown format {fmt!r}; known: {', '.join(FORMATS)}")

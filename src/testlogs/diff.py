@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from typing import Any
 
 from testlogs.models import Run, Status, TestResult
 
@@ -34,7 +35,7 @@ class RunDiff:
     def is_empty(self) -> bool:
         return not (self.fixed or self.broken or self.appeared or self.vanished or self.changed)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "fixed": self.fixed,
             "broken": self.broken,

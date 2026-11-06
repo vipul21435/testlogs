@@ -122,10 +122,10 @@ def parse(lines: list[str]) -> Run:
         if _FINAL.match(line) or _FINAL_QUIET.match(line):
             complete = True
             in_summary = False
-            for m in _SUBTEST_COUNT.finditer(line):
-                run.notes.append(f"pytest counts {m.group('n')} subtests {m.group('what')}")
+            for sc in _SUBTEST_COUNT.finditer(line):
+                run.notes.append(f"pytest counts {sc.group('n')} subtests {sc.group('what')}")
             final_total = sum(
-                int(m.group("n")) for m in _FINAL_COUNT.finditer(line) if not m.group("sub")
+                int(fc.group("n")) for fc in _FINAL_COUNT.finditer(line) if not fc.group("sub")
             )
             continue
         m = _DURATION.match(line)
