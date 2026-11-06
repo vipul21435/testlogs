@@ -73,5 +73,38 @@ def test_interleaved_output_between_lines():
         "============================== 2 passed in 0.01s ===============================\n"
     )
     run = parse(text)
-    assert [r.id for r in run.results] == ["t/test_a.py::test_two", "t/test_a.py::test_one"]
+    assert [r.id for r in run.results] == ["t/test_a.py::test_one", "t/test_a.py::test_two"]
     assert not run.incomplete
+
+
+def _status_map(name):
+    return {r.id: r.status for r in parse((FIX / name).read_text(encoding="utf-8")).results}
+
+
+def test_dash_s_and_xdist_logs_match_plain_verbose():
+    plain = _status_map("pytest-v-after.log")
+    assert _status_map("pytest-v-s.log") == plain
+    assert _status_map("pytest-xdist.log") == plain
+
+
+def test_dash_s_status_on_next_line_without_summary():
+    text = (FIX / "pytest-v-s.log").read_text(encoding="utf-8")
+    body = text.split("=" * 20 + " ERRORS")[0]
+    run = parse(body, fmt="pytest")
+    by = {r.id.rsplit("::", 1)[1]: r.status for r in run.results}
+    assert by["test_prints_then_fails"] is Status.FAILED
+    assert run.incomplete
+
+
+def test_xdist_start_lines_are_not_records():
+    text = (
+        "t/test_a.py::test_x[a b] \n"
+        "t/test_a.py::test_y \n"
+        "[gw1] [ 50%] PASSED t/test_a.py::test_y \n"
+        "[gw0] [100%] FAILED t/test_a.py::test_x[a b] \n"
+    )
+    run = parse(text, fmt="pytest")
+    assert [(r.id, r.status) for r in run.results] == [
+        ("t/test_a.py::test_y", Status.PASSED),
+        ("t/test_a.py::test_x[a b]", Status.FAILED),
+    ]

@@ -20,6 +20,10 @@ $P -q --junitxml=fixtures/junit-after.xml $S > /dev/null 2>&1
 # A colour run with progress output, to exercise ANSI stripping.
 uv run --no-sync python -m pytest -p no:cacheprovider --color=yes -v $S \
   > fixtures/pytest-v-color.log 2>&1
+# -s lets test output split a verbose line; -n 2 (pytest-xdist) interleaves two workers.
+$P -v -s $S > fixtures/pytest-v-s.log 2>&1
+uv run --no-sync --with pytest-xdist==3.8.0 python -m pytest -p no:cacheprovider --color=no \
+  -v -n 2 $S > fixtures/pytest-xdist.log 2>&1
 # A truncated tail: the first 12 lines of the verbose log.
 head -n 12 fixtures/pytest-v-after.log > fixtures/pytest-v-truncated.log
 
@@ -35,7 +39,7 @@ $U fixtures.subtests_sample.test_subtests > fixtures/subtests-unittest-v.log 2>&
 
 # Replace the machine's checkout path and host name so fixtures are portable.
 for f in fixtures/*.log fixtures/*.xml; do
-  sed -i.bak -e "s#$ROOT#/work#g" -e 's/hostname="[^"]*"/hostname="localhost"/g' \
+  sed -i.bak -e "s#$ROOT#/work#g" -e "s#$HOME#/home/user#g" -e 's/hostname="[^"]*"/hostname="localhost"/g' \
     -e 's/timestamp="[^"]*"/timestamp="2026-01-01T00:00:00"/g' "$f" && rm "$f.bak"
 done
 echo "fixtures regenerated"

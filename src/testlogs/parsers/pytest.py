@@ -40,6 +40,15 @@ _SUMMARY = re.compile(
     r"^(?P<status>PASSED|FAILED|SKIPPED|ERROR|XFAIL|XPASS)\s+"
     r"(?:\[\d+\]\s+)?(?P<id>\S+?(?:::\S.*?|:\d+)?)(?:\s+-\s+.*)?$"
 )
+# pytest-xdist: "[gw1] [ 42%] PASSED path::id". Workers finish in any order.
+_XDIST = re.compile(
+    r"^\[gw\d+\] \[\s*\d+%\] (?P<status>PASSED|FAILED|SKIPPED|ERROR|XFAIL|XPASS) (?P<id>\S+?::.+?)"
+    r"(?:\s+\((?P<reason>[^)]*)\))?\s*$"
+)
+# With -s the test's own output follows the id, and the status word starts a later line.
+_BARE_STATUS = re.compile(
+    r"^(?P<status>PASSED|FAILED|SKIPPED|ERROR|XFAIL|XPASS)(?:\s+\([^)]*\))?(?:\s+\[\s*\d+%\])?$"
+)
 _SUBTEST = re.compile(
     r"^SUB(?P<status>FAILED|PASSED|SKIPPED)\((?P<params>.*?)\)\s+"
     r"(?P<id>[^\s:]+::.*?)(?:\s+-\s+.*)?$"
@@ -63,6 +72,25 @@ def looks_like(lines: list[str]) -> bool:
     return hits >= 2 and any("::" in ln for ln in lines)
 
 
+def _leading_node_id(line: str) -> str | None:
+    """The node id at the start of ``line``: up to the first space outside brackets."""
+    depth = 0
+    for i, ch in enumerate(line):
+        if ch == "[":
+            depth += 1
+        elif ch == "]":
+            depth = max(depth - 1, 0)
+        elif ch.isspace() and depth == 0:
+            head = line[:i]
+            break
+    else:
+        head = line
+    first, sep, _ = head.partition("::")
+    if sep and first and ":" not in first.replace(":\\", ""):
+        return head
+    return None
+
+
 def _file_of(node_id: str) -> str:
     if "::" in node_id:
         return node_id.split("::", 1)[0]
@@ -78,6 +106,7 @@ def parse(lines: list[str]) -> Run:
     final_total: int | None = None
     in_summary = False
     complete = False
+    pending: str | None = None  # an id whose status has not been printed yet
     for raw in lines:
         line = raw.rstrip()
         if not line:
@@ -110,10 +139,23 @@ def parse(lines: list[str]) -> Run:
                 tid = m.group("id")
                 summary.append(TestResult(tid, _STATUS_WORDS[m.group("status")], _file_of(tid)))
             continue
-        m = _VERBOSE.match(line)
+        m = _XDIST.match(line) or _VERBOSE.match(line)
         if m:
             tid = m.group("id")
             verbose.append(TestResult(tid, _STATUS_WORDS[m.group("status")], _file_of(tid)))
+            pending = None
+            continue
+        m = _BARE_STATUS.match(line)
+        if m and pending is not None:
+            verbose.append(TestResult(pending, _STATUS_WORDS[m.group("status")], _file_of(pending)))
+            pending = None
+            continue
+        if line.startswith("=") or line.startswith("_"):
+            pending = None
+            continue
+        tid = _leading_node_id(line)
+        if tid is not None:
+            pending = tid
     # Merge: verbose lines give the order and every id; summary rows override the
     # status (a verbose line can be split by captured output, the summary cannot).
     order: list[str] = []
