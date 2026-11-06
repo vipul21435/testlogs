@@ -32,6 +32,10 @@ uv run --no-sync --with pytest-rerunfailures==16.1 python -m pytest -p no:cachep
 # A truncated tail: the first 12 lines of the verbose log.
 head -n 12 fixtures/pytest-v-after.log > fixtures/pytest-v-truncated.log
 
+# Parameter ids holding " - ", an unbalanced "]" and "[ 5%]", which look like parts of a row.
+$P -v fixtures/edge_sample > fixtures/pytest-v-edge.log 2>&1
+$P -v -rA fixtures/edge_sample > fixtures/pytest-rA-edge.log 2>&1
+
 # unittest -v on its own sample (kept out of pytest_sample so the pytest logs stay the same).
 $U fixtures.unittest_sample.test_unit > fixtures/unittest-v.log 2>&1
 

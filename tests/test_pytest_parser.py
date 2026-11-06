@@ -132,3 +132,39 @@ def test_rerun_lines_are_counted_not_recorded():
     }
     assert run.summary_total == 3
     assert any("1 passed only on a rerun" in n and "test_flaky_then_passes" in n for n in run.notes)
+
+
+EDGE_IDS = {
+    "test_p[a - b]": Status.PASSED,
+    "test_p[c]d]": Status.PASSED,
+    "test_p[q [ 5%]]": Status.PASSED,
+    "test_p[plain]": Status.PASSED,
+    "test_q[fails - here]": Status.FAILED,
+    "test_q[ok]": Status.PASSED,
+}
+
+
+def test_summary_rows_keep_ids_that_contain_dash_and_brackets():
+    for name in ("pytest-v-edge.log", "pytest-rA-edge.log"):
+        run = parse((FIX / name).read_text())
+        assert _statuses(run) == EDGE_IDS, name
+        assert run.summary_total == len(run.results) == 6
+        assert run.notes == []
+
+
+def test_summary_only_rows_split_reason_outside_brackets():
+    log = "\n".join(
+        [
+            "=========================== short test summary info ============================",
+            "PASSED t.py::test_p[a - b]",
+            "PASSED t.py::test_p[c]d]",
+            "FAILED t.py::test_q[x - y] - AssertionError: a - b",
+            "========================= 1 failed, 2 passed in 0.02s ==========================",
+        ]
+    )
+    run = parse(log, fmt="pytest")
+    assert _statuses(run) == {
+        "test_p[a - b]": Status.PASSED,
+        "test_p[c]d]": Status.PASSED,
+        "test_q[x - y]": Status.FAILED,
+    }

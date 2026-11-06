@@ -1,0 +1,37 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.2.0, pluggy-1.7.0 -- /work/.venv/bin/python3
+rootdir: /work
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 6 items
+
+fixtures/edge_sample/test_edge.py::test_p[a - b] PASSED                  [ 16%]
+fixtures/edge_sample/test_edge.py::test_p[c]d] PASSED                    [ 33%]
+fixtures/edge_sample/test_edge.py::test_p[q [ 5%]] PASSED                [ 50%]
+fixtures/edge_sample/test_edge.py::test_p[plain] PASSED                  [ 66%]
+fixtures/edge_sample/test_edge.py::test_q[fails - here] FAILED           [ 83%]
+fixtures/edge_sample/test_edge.py::test_q[ok] PASSED                     [100%]
+
+=================================== FAILURES ===================================
+_____________________________ test_q[fails - here] _____________________________
+
+x = 'fails - here'
+
+    @pytest.mark.parametrize("x", ["fails - here", "ok"])
+    def test_q(x):
+>       assert x == "ok"
+E       AssertionError: assert 'fails - here' == 'ok'
+E         
+E         - ok
+E         + fails - here
+
+fixtures/edge_sample/test_edge.py:13: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED fixtures/edge_sample/test_edge.py::test_p[a - b]
+PASSED fixtures/edge_sample/test_edge.py::test_p[c]d]
+PASSED fixtures/edge_sample/test_edge.py::test_p[q [ 5%]]
+PASSED fixtures/edge_sample/test_edge.py::test_p[plain]
+PASSED fixtures/edge_sample/test_edge.py::test_q[ok]
+FAILED fixtures/edge_sample/test_edge.py::test_q[fails - here] - AssertionErr...
+========================= 1 failed, 5 passed in 0.02s ==========================

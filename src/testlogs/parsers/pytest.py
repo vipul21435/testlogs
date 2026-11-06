@@ -4,6 +4,8 @@ Verbose lines look like ``tests/test_a.py::test_x[a b] PASSED  [ 33%]``.
 Summary lines (``-rA``) look like ``PASSED tests/test_a.py::test_x`` or
 ``FAILED tests/test_a.py::test_x - AssertionError``. When both are present the
 summary wins, because a test's verbose line can be split by captured output.
+A parameter id may contain `` - `` itself, so a summary row's id is the longest
+id already seen on a verbose line, or else ends at the first `` - `` outside brackets.
 The final ``==== 3 passed in 0.02s ====`` line marks a complete log; without
 it the run is reported incomplete.
 
@@ -107,6 +109,30 @@ def _leading_node_id(line: str) -> str | None:
     return None
 
 
+def _summary_id(rest: str, known: set[str]) -> str:
+    """The node id at the start of a summary row's text, before any " - reason".
+
+    A parameter id may itself contain " - " or unbalanced brackets, so a known id
+    from a verbose line wins; otherwise " - " only ends the id outside brackets.
+    """
+    if rest in known:
+        return rest
+    cut = rest.rfind(" - ")
+    while cut > 0:
+        if rest[:cut] in known:
+            return rest[:cut]
+        cut = rest.rfind(" - ", 0, cut)
+    depth = 0
+    for i, ch in enumerate(rest):
+        if ch == "[":
+            depth += 1
+        elif ch == "]":
+            depth = max(depth - 1, 0)
+        elif depth == 0 and rest.startswith(" - ", i):
+            return rest[:i]
+    return rest.rstrip()
+
+
 def _file_of(node_id: str) -> str:
     if "::" in node_id:
         return node_id.split("::", 1)[0]
@@ -117,6 +143,7 @@ def parse(lines: list[str]) -> Run:
     run = Run(format="pytest")
     verbose: list[TestResult] = []
     summary: list[TestResult] = []
+    known: set[str] = set()  # ids seen on verbose lines
     durations: dict[str, float] = {}
     subfailed: dict[str, int] = {}
     final_total: int | None = None
@@ -149,11 +176,15 @@ def parse(lines: list[str]) -> Run:
             m = _SUBTEST.match(line)
             if m:
                 if m.group("status") == "FAILED":
-                    subfailed[m.group("id")] = subfailed.get(m.group("id"), 0) + 1
+                    tid = _summary_id(line[m.start("id") :], known)
+                    subfailed[tid] = subfailed.get(tid, 0) + 1
                 continue
             m = _SUMMARY.match(line)
             if m:
                 tid = m.group("id")
+                if "::" in tid:
+                    rest = line[m.start("id") :]
+                    tid = _summary_id(rest, known)
                 summary.append(TestResult(tid, _STATUS_WORDS[m.group("status")], _file_of(tid)))
             continue
         m = _RERUN.match(line)
@@ -165,11 +196,13 @@ def parse(lines: list[str]) -> Run:
         if m:
             tid = m.group("id")
             verbose.append(TestResult(tid, _STATUS_WORDS[m.group("status")], _file_of(tid)))
+            known.add(tid)
             pending = None
             continue
         m = _BARE_STATUS.match(line)
         if m and pending is not None:
             verbose.append(TestResult(pending, _STATUS_WORDS[m.group("status")], _file_of(pending)))
+            known.add(pending)
             pending = None
             continue
         if line.startswith("=") or line.startswith("_"):
