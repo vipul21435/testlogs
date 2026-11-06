@@ -94,3 +94,26 @@ def test_warnings_summary_ends_a_captured_section():
     run = _run_text(text)
     assert not run.incomplete
     assert [r.id for r in run.results] == ["a.py::test_x"]
+
+
+def test_grouped_skip_rows_are_counted_in_a_note():
+    run = _run("pytest-q-rA-tricky.log")
+    assert not run.incomplete
+    assert not any(r.status.value == "skipped" for r in run.results)
+    assert any("4 skipped tests" in n and "no test id" in n for n in run.notes)
+    # With -v the same skips have ids, and the rows add nothing.
+    verbose = _run("pytest-rA-tricky.log")
+    assert sum(r.status.value == "skipped" for r in verbose.results) == 4
+    assert not any("no test id" in n for n in verbose.notes)
+
+
+def test_small_quiet_logs_are_detected():
+    from testlogs import detect_format
+
+    assert detect_format((FIX / "pytest-q-one.log").read_text()) == "pytest"
+    text = "F..                                                                      [100%]\n"
+    text += "=========================== short test summary info ============================\n"
+    text += "FAILED a.py::test_x - assert 0\n1 failed, 2 passed in 0.12s\n"
+    assert detect_format(text) == "pytest"
+    run = _run("pytest-q-one.log")
+    assert not run.incomplete and run.summary_total == 1

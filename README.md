@@ -281,7 +281,9 @@ Tests: `uv run pytest -q --cov=testlogs` gives 135 passed and 97 % line coverage
 - Default jest and vitest reporters, cargo terse and pytest `-q` name only failures;
   passing tests are counted (`summary_total`) but have no records, so a diff against a
   verbose log shows them as vanished. vitest 2's verbose reporter does not print
-  skipped or todo tests either.
+  skipped or todo tests either. pytest's `-rA` summary groups skips by location
+  (`SKIPPED [3] tests/a.py:18: reason`), so in a `-q -rA` log skipped tests have no
+  records either; their number is given in a note.
 - Passing subtests get no records; a failing one marks its parent failed and is not a
   record of its own.
 - pytest `-s` output that a test writes without a trailing newline glues onto the

@@ -47,6 +47,10 @@ _SUMMARY = re.compile(
     r"^(?P<status>PASSED|FAILED|SKIPPED|ERROR|XFAIL|XPASS)\s+"
     r"(?:\[\d+\]\s+)?(?P<id>\S+?(?:::\S.*?|:\d+)?)(?:\s+-\s+.*)?$"
 )
+# pytest groups skips by location: "SKIPPED [3] tests/a.py:18: reason" names no test.
+_SKIP_ROW = re.compile(r"^SKIPPED \[(?P<n>\d+)\] (?P<loc>\S+?:\d+)(?::\s.*)?$")
+# -q progress: one character per test, then the percentage.
+_PROGRESS = re.compile(r"^[.FEsxXR]+\s*(?:\[\s*\d+%\])?$")
 # pytest-rerunfailures prints "path::id RERUN [ 33%]" before each repeat.
 _RERUN = re.compile(r"^(?P<id>\S+?::\S.*?)\s+RERUN(?:\s+\[\s*\d+%\])?\s*$")
 # pytest-xdist: "[gw1] [ 42%] PASSED path::id". Workers finish in any order.
@@ -100,7 +104,13 @@ def looks_like(lines: list[str]) -> bool:
     if any(ln.startswith("============================= test session starts") for ln in lines):
         return True
     hits = sum(1 for ln in lines if _VERBOSE.match(ln) or _SUMMARY.match(ln))
-    return hits >= 2 and any("::" in ln for ln in lines)
+    if hits >= 2 and any("::" in ln for ln in lines):
+        return True
+    # A short -q log: a borderless final line after progress characters or a summary row.
+    stripped = [ln.rstrip() for ln in lines]
+    if any(_FINAL.match(ln) or _FINAL_QUIET.match(ln) for ln in stripped):
+        return any(_PROGRESS.match(ln) or (_SUMMARY.match(ln) and "::" in ln) for ln in stripped)
+    return False
 
 
 def _leading_node_id(line: str) -> str | None:
@@ -174,6 +184,7 @@ def parse(lines: list[str]) -> Run:
     pending: str | None = None  # an id whose status has not been printed yet
     reruns: dict[str, int] = {}
     interrupted: list[str] = []
+    grouped_skips = 0  # skips counted by "SKIPPED [n] file:line" rows
     unfinished: str | None = None  # the test running when the run was interrupted
     collected: int | None = None
     last = max((i for i, ln in enumerate(lines) if ln.strip()), default=-1)
@@ -239,6 +250,10 @@ def parse(lines: list[str]) -> Run:
                     tid = _summary_id(line[m.start("id") :], known)
                     subfailed[tid] = subfailed.get(tid, 0) + 1
                 continue
+            m = _SKIP_ROW.match(line)
+            if m:
+                grouped_skips += int(m.group("n"))
+                continue
             m = _SUMMARY.match(line)
             if m:
                 tid = m.group("id")
@@ -286,11 +301,6 @@ def parse(lines: list[str]) -> Run:
             order.append(r.id)
         status[r.id] = r.status
     for r in summary:
-        if "::" not in r.id:
-            # "SKIPPED [1] file:line: reason" carries no node id; keep it only
-            # when no verbose line already recorded a skip in that file.
-            if any(status.get(i) == Status.SKIPPED and i.startswith(r.file) for i in order):
-                continue
         if r.id not in status:
             order.append(r.id)
         status[r.id] = r.status
@@ -306,6 +316,13 @@ def parse(lines: list[str]) -> Run:
             f"{'that test is' if len(subfailed) == 1 else 'those tests are'} recorded as failed"
         )
     run.results = [TestResult(i, status[i], _file_of(i), durations.get(i)) for i in order]
+    named_skips = sum(1 for i in order if status[i] is Status.SKIPPED)
+    if grouped_skips > named_skips:
+        n = grouped_skips - named_skips
+        run.notes.append(
+            f"{plural(n, 'skipped test')} counted by file and line in the summary "
+            "with no test id; run pytest with -v to name them"
+        )
     if reruns:
         passed_late = [i for i in reruns if status.get(i) is Status.PASSED]
         n_runs = sum(reruns.values())
