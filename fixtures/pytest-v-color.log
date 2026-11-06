@@ -1,0 +1,54 @@
+[1m============================= test session starts ==============================[0m
+platform darwin -- Python 3.12.13, pytest-9.2.0, pluggy-1.7.0 -- /work/.venv/bin/python3
+rootdir: /work
+configfile: pyproject.toml
+plugins: cov-7.1.0
+[1mcollecting ... [0mcollected 14 items
+
+fixtures/pytest_sample/test_sample.py::test_add [32mPASSED[0m[32m                   [  7%][0m
+fixtures/pytest_sample/test_sample.py::test_names_with_spaces [32mPASSED[0m[32m     [ 14%][0m
+fixtures/pytest_sample/test_sample.py::test_param[plain] [32mPASSED[0m[32m          [ 21%][0m
+fixtures/pytest_sample/test_sample.py::test_param[with space] [32mPASSED[0m[32m     [ 28%][0m
+fixtures/pytest_sample/test_sample.py::test_param[br[ack]ets] [32mPASSED[0m[32m     [ 35%][0m
+fixtures/pytest_sample/test_sample.py::test_param[\xfcn\xefcode] [32mPASSED[0m[32m  [ 42%][0m
+fixtures/pytest_sample/test_sample.py::test_fixed_in_after [32mPASSED[0m[32m        [ 50%][0m
+fixtures/pytest_sample/test_sample.py::test_broken_in_after [31mFAILED[0m[31m       [ 57%][0m
+fixtures/pytest_sample/test_sample.py::test_skipped [33mSKIPPED[0m (not for...)[31m [ 64%][0m
+fixtures/pytest_sample/test_sample.py::test_xfail [33mXFAIL[0m (known gap)[31m      [ 71%][0m
+fixtures/pytest_sample/test_sample.py::test_xpass [33mXPASS[0m (documented ...)[31m [ 78%][0m
+fixtures/pytest_sample/test_sample.py::test_error [31mERROR[0m[31m                  [ 85%][0m
+fixtures/pytest_sample/test_sample.py::test_prints_then_fails [31mFAILED[0m[31m     [ 92%][0m
+fixtures/pytest_sample/test_sample.py::test_only_in_after [32mPASSED[0m[31m         [100%][0m
+
+==================================== ERRORS ====================================
+[31m[1m_________________________ ERROR at setup of test_error _________________________[0m
+
+    [0m[37m@pytest[39;49;00m.fixture[90m[39;49;00m
+    [94mdef[39;49;00m[90m [39;49;00m[92mbroken_fixture[39;49;00m():[90m[39;49;00m
+>       [94mraise[39;49;00m [96mRuntimeError[39;49;00m([33m"[39;49;00m[33msetup blew up[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
+[1m[31mE       RuntimeError: setup blew up[0m
+
+[1m[31mfixtures/pytest_sample/test_sample.py[0m:46: RuntimeError
+=================================== FAILURES ===================================
+[31m[1m_____________________________ test_broken_in_after _____________________________[0m
+
+    [0m[94mdef[39;49;00m[90m [39;49;00m[92mtest_broken_in_after[39;49;00m():[90m[39;49;00m
+>       [94massert[39;49;00m VERSION < [94m2[39;49;00m[90m[39;49;00m
+[1m[31mE       assert 2 < 2[0m
+
+[1m[31mfixtures/pytest_sample/test_sample.py[0m:26: AssertionError
+[31m[1m____________________________ test_prints_then_fails ____________________________[0m
+
+    [0m[94mdef[39;49;00m[90m [39;49;00m[92mtest_prints_then_fails[39;49;00m():[90m[39;49;00m
+        [96mprint[39;49;00m([33m"[39;49;00m[33mcaptured output line[39;49;00m[33m\r[39;49;00m[33mprogress 100[39;49;00m[33m%[39;49;00m[33m"[39;49;00m)[90m[39;49;00m
+>       [94massert[39;49;00m VERSION == [94m0[39;49;00m[90m[39;49;00m
+[1m[31mE       assert 2 == 0[0m
+
+[1m[31mfixtures/pytest_sample/test_sample.py[0m:55: AssertionError
+----------------------------- Captured stdout call -----------------------------
+captured output lineprogress 100%
+[36m[1m=========================== short test summary info ============================[0m
+[31mFAILED[0m fixtures/pytest_sample/test_sample.py::[1mtest_broken_in_after[0m - assert 2 < 2
+[31mFAILED[0m fixtures/pytest_sample/test_sample.py::[1mtest_prints_then_fails[0m - assert 2 == 0
+[31mERROR[0m fixtures/pytest_sample/test_sample.py::[1mtest_error[0m - RuntimeError: setup blew up
+[31m==== [31m[1m2 failed[0m, [32m8 passed[0m, [33m1 skipped[0m, [33m1 xfailed[0m, [33m1 xpassed[0m, [31m[1m1 error[0m[31m in 0.03s[0m[31m =====[0m

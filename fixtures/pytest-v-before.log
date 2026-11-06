@@ -1,0 +1,54 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.2.0, pluggy-1.7.0 -- /work/.venv/bin/python3
+rootdir: /work
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 14 items
+
+fixtures/pytest_sample/test_sample.py::test_add PASSED                   [  7%]
+fixtures/pytest_sample/test_sample.py::test_names_with_spaces PASSED     [ 14%]
+fixtures/pytest_sample/test_sample.py::test_param[plain] PASSED          [ 21%]
+fixtures/pytest_sample/test_sample.py::test_param[with space] PASSED     [ 28%]
+fixtures/pytest_sample/test_sample.py::test_param[br[ack]ets] PASSED     [ 35%]
+fixtures/pytest_sample/test_sample.py::test_param[\xfcn\xefcode] PASSED  [ 42%]
+fixtures/pytest_sample/test_sample.py::test_fixed_in_after FAILED        [ 50%]
+fixtures/pytest_sample/test_sample.py::test_broken_in_after PASSED       [ 57%]
+fixtures/pytest_sample/test_sample.py::test_skipped SKIPPED (not for...) [ 64%]
+fixtures/pytest_sample/test_sample.py::test_xfail XFAIL (known gap)      [ 71%]
+fixtures/pytest_sample/test_sample.py::test_xpass XPASS (documented ...) [ 78%]
+fixtures/pytest_sample/test_sample.py::test_error ERROR                  [ 85%]
+fixtures/pytest_sample/test_sample.py::test_prints_then_fails FAILED     [ 92%]
+fixtures/pytest_sample/test_sample.py::test_only_in_after SKIPPED (a...) [100%]
+
+==================================== ERRORS ====================================
+_________________________ ERROR at setup of test_error _________________________
+
+    @pytest.fixture
+    def broken_fixture():
+>       raise RuntimeError("setup blew up")
+E       RuntimeError: setup blew up
+
+fixtures/pytest_sample/test_sample.py:46: RuntimeError
+=================================== FAILURES ===================================
+_____________________________ test_fixed_in_after ______________________________
+
+    def test_fixed_in_after():
+>       assert VERSION >= 2
+E       assert 1 >= 2
+
+fixtures/pytest_sample/test_sample.py:22: AssertionError
+____________________________ test_prints_then_fails ____________________________
+
+    def test_prints_then_fails():
+        print("captured output line\rprogress 100%")
+>       assert VERSION == 0
+E       assert 1 == 0
+
+fixtures/pytest_sample/test_sample.py:55: AssertionError
+----------------------------- Captured stdout call -----------------------------
+captured output lineprogress 100%
+=========================== short test summary info ============================
+FAILED fixtures/pytest_sample/test_sample.py::test_fixed_in_after - assert 1 ...
+FAILED fixtures/pytest_sample/test_sample.py::test_prints_then_fails - assert...
+ERROR fixtures/pytest_sample/test_sample.py::test_error - RuntimeError: setup...
+==== 2 failed, 7 passed, 2 skipped, 1 xfailed, 1 xpassed, 1 error in 0.02s =====

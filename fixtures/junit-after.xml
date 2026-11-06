@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="2" skipped="2" tests="14" time="0.021" timestamp="2026-11-06T13:07:49.673641+05:30" hostname="localhost"><testcase classname="fixtures.pytest_sample.test_sample" name="test_add" time="0.000" /><testcase classname="fixtures.pytest_sample.test_sample" name="test_names_with_spaces" time="0.000" /><testcase classname="fixtures.pytest_sample.test_sample" name="test_param[plain]" time="0.000" /><testcase classname="fixtures.pytest_sample.test_sample" name="test_param[with space]" time="0.000" /><testcase classname="fixtures.pytest_sample.test_sample" name="test_param[br[ack]ets]" time="0.000" /><testcase classname="fixtures.pytest_sample.test_sample" name="test_param[\xfcn\xefcode]" time="0.000" /><testcase classname="fixtures.pytest_sample.test_sample" name="test_fixed_in_after" time="0.000" /><testcase classname="fixtures.pytest_sample.test_sample" name="test_broken_in_after" time="0.000"><failure message="assert 2 &lt; 2">def test_broken_in_after():
+&gt;       assert VERSION &lt; 2
+E       assert 2 &lt; 2
+
+fixtures/pytest_sample/test_sample.py:26: AssertionError</failure></testcase><testcase classname="fixtures.pytest_sample.test_sample" name="test_skipped" time="0.000"><skipped type="pytest.skip" message="not for this platform">/work/fixtures/pytest_sample/test_sample.py:29: not for this platform</skipped></testcase><testcase classname="fixtures.pytest_sample.test_sample" name="test_xfail" time="0.000"><skipped type="pytest.xfail" message="known gap" /></testcase><testcase classname="fixtures.pytest_sample.test_sample" name="test_xpass" time="0.000" /><testcase classname="fixtures.pytest_sample.test_sample" name="test_error" time="0.000"><error message="failed on setup with &quot;RuntimeError: setup blew up&quot;">@pytest.fixture
+    def broken_fixture():
+&gt;       raise RuntimeError("setup blew up")
+E       RuntimeError: setup blew up
+
+fixtures/pytest_sample/test_sample.py:46: RuntimeError</error></testcase><testcase classname="fixtures.pytest_sample.test_sample" name="test_prints_then_fails" time="0.000"><failure message="assert 2 == 0">def test_prints_then_fails():
+        print("captured output line\rprogress 100%")
+&gt;       assert VERSION == 0
+E       assert 2 == 0
+
+fixtures/pytest_sample/test_sample.py:55: AssertionError</failure></testcase><testcase classname="fixtures.pytest_sample.test_sample" name="test_only_in_after" time="0.000" /></testsuite></testsuites>

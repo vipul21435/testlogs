@@ -1,0 +1,12 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.2.0, pluggy-1.7.0 -- /work/.venv/bin/python3
+rootdir: /work
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 14 items
+
+fixtures/pytest_sample/test_sample.py::test_add PASSED                   [  7%]
+fixtures/pytest_sample/test_sample.py::test_names_with_spaces PASSED     [ 14%]
+fixtures/pytest_sample/test_sample.py::test_param[plain] PASSED          [ 21%]
+fixtures/pytest_sample/test_sample.py::test_param[with space] PASSED     [ 28%]
+fixtures/pytest_sample/test_sample.py::test_param[br[ack]ets] PASSED     [ 35%]
