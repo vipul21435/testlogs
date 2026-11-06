@@ -4,7 +4,7 @@
 # Usage: bash examples/real_data.sh DATA_DIR
 set -u
 DATA="${1:?usage: real_data.sh DATA_DIR}"
-mkdir -p "$DATA/logs"
+mkdir -p "$DATA/logs/old"
 cd "$DATA"
 [ -d more-itertools ] || git clone -q --depth 1 https://github.com/more-itertools/more-itertools.git
 cd more-itertools
@@ -18,7 +18,13 @@ $PY -m pytest -p no:cacheprovider --color=no -v -rA --durations=0 \
   --junitxml=../logs/junit.xml tests > ../logs/pytest-rA.log 2>&1
 $PY -m pytest -p no:cacheprovider --color=yes -v tests > ../logs/pytest-v-color.log 2>&1
 $PY -m unittest -v tests.test_more tests.test_recipes > ../logs/unittest-v.log 2>&1
-for f in ../logs/*.log ../logs/*.xml; do
-  sed -i.bak -e "s#$ROOT#/work#g" -e 's/hostname="[^"]*"/hostname="localhost"/g' "$f" && rm "$f.bak"
+# The same suite at an older release, run with that release's code, for a real diff.
+OLD=v10.5.0
+git fetch -q --depth 1 origin tag "$OLD"
+[ -d "../more-itertools-$OLD" ] || git worktree add -q "../more-itertools-$OLD" "$OLD"
+(cd "../more-itertools-$OLD" && PYTHONPATH=. "$ROOT/$PY" -m pytest -p no:cacheprovider --color=no \
+  -v tests > ../logs/old/pytest-v.log 2>&1)
+for f in ../logs/*.log ../logs/*.xml ../logs/old/*.log; do
+  sed -i.bak -e "s#$ROOT-$OLD#/work#g" -e "s#$ROOT#/work#g" -e "s#$HOME#/home/user#g" -e 's/hostname="[^"]*"/hostname="localhost"/g' "$f" && rm "$f.bak"
 done
 ls -l ../logs

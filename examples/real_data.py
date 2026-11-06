@@ -65,6 +65,17 @@ def main() -> None:
             f"{len(d.appeared)}, vanished {len(d.vanished)}, other {len(d.changed)}"
         )
 
+    old_log = args.data_dir / "logs" / "old" / "pytest-v.log"
+    if old_log.exists():
+        old = parse(old_log.read_text(encoding="utf-8"))
+        d = diff_runs(old, base)
+        print(f"\nOlder release ({len(old.results)} records, {old.counts()['skipped']} skipped)")
+        print(
+            f"  -> current ({len(base.results)} records): fixed {len(d.fixed)}, broken "
+            f"{len(d.broken)}, appeared {len(d.appeared)}, vanished {len(d.vanished)}, "
+            f"other {len(d.changed)}"
+        )
+
     rng = random.Random(args.seed)
     print(f"\nTruncation: {args.cuts} cuts per log at random byte offsets:")
     for name, text in texts.items():
