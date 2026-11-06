@@ -247,15 +247,17 @@ read as a complete, smaller run. The test suite also cuts 14 fixture logs at eve
 before their closing line (565 cuts) and checks each is incomplete
 (`tests/test_truncation.py`).
 
-Tests: `uv run pytest -q --cov=testlogs` gives 116 passed and 96 % line coverage
-(988 statements, 35 missed) in 0.35 s; the same suite passes on Python 3.10.
+Tests: `uv run pytest -q --cov=testlogs` gives 118 passed and 96 % line coverage
+(1013 statements, 38 missed) in 0.31 s; the same suite passes on Python 3.10.
 
 ## Limitations
 
 - go and cargo fixtures are written by hand from the documented formats; no real go or
   cargo log has been parsed, because neither toolchain is installed here. go benchmark
   lines, `=== PAUSE`/`=== CONT` ordering and the `FailedBuild` field are not
-  interpreted, and cargo's unstable `--format json` is not supported.
+  interpreted, and cargo's unstable `--format json` is not supported. With
+  `cargo test -- --no-capture` a test's own output can split its `test x ... ok` line;
+  that shape is not handled.
 - go and cargo have no line that closes the whole run, only one per package or test
   binary, so a log cut exactly between two packages or binaries looks complete.
 - Default jest and vitest reporters, cargo terse and pytest `-q` name only failures;
