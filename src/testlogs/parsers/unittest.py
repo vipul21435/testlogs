@@ -3,6 +3,11 @@
 Lines look like ``test_x (pkg.mod.Class.test_x) ... ok``. A test with a docstring
 prints the description on the next line before the result. The run is complete
 when the ``Ran N tests in Xs`` line is present.
+
+A test whose ``subTest`` cases fail prints ``test_x (qual) ... `` with no result,
+then one indented ``test_x (qual) (i=1) ... FAIL`` line per failing case and no
+line for the parent. The parent is recorded once, as failed (or error), so that
+it lines up with the pytest and JUnit records of the same run.
 """
 
 from __future__ import annotations
@@ -20,7 +25,10 @@ _RESULTS = {
     "unexpected success": Status.XPASS,
 }
 _RESULT_RE = r"(?P<result>ok|FAIL|ERROR|skipped(?:\s+.*)?|expected failure|unexpected success)"
-_HEAD = re.compile(r"^(?P<name>\S+) \((?P<qual>[\w.]+)\)(?: \.\.\. " + _RESULT_RE + r")?\s*$")
+_HEAD = re.compile(r"^(?P<name>\S+) \((?P<qual>[\w.]+)\)(?: \.\.\.(?: " + _RESULT_RE + r")?)?\s*$")
+_SUB = re.compile(
+    r"^\s+(?P<name>\S+) \((?P<qual>[\w.]+)\) \(.*\) \.\.\. (?P<result>FAIL|ERROR|skipped.*)$"
+)
 _TAIL = re.compile(r"^.*\.\.\. " + _RESULT_RE + r"\s*$")
 _RAN = re.compile(r"^Ran \d+ tests? in [\d.]+s$")
 
@@ -44,11 +52,21 @@ def _file_of(qual: str) -> str:
 def parse(lines: list[str]) -> Run:
     run = Run(format="unittest")
     pending: tuple[str, str] | None = None
+    sub_failed: dict[str, Status] = {}
     complete = False
     for raw in lines:
         line = raw.rstrip()
         if _RAN.match(line):
             complete = True
+            continue
+        m = _SUB.match(line)
+        if m:
+            tid = m.group("qual")
+            status = _status(m.group("result"))
+            if status is not Status.SKIPPED and tid not in sub_failed:
+                sub_failed[tid] = status
+                run.results.append(TestResult(tid, status, _file_of(tid)))
+            pending = None
             continue
         m = _HEAD.match(line)
         if m:
@@ -64,6 +82,8 @@ def parse(lines: list[str]) -> Run:
             if m:
                 run.results.append(TestResult(pending[0], _status(m.group("result")), pending[1]))
                 pending = None
+    if sub_failed:
+        run.notes.append(f"{len(sub_failed)} tests with failing subtests are recorded as failed")
     run.incomplete = not complete
     if run.incomplete:
         run.notes.append("no 'Ran N tests' line: the log is truncated or the run was interrupted")

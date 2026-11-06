@@ -1,0 +1,42 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.2.0, pluggy-1.7.0 -- /work/.venv/bin/python3
+rootdir: /work
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 3 items
+
+fixtures/subtests_sample/test_subtests.py::Table::test_all_cases_pass 
+fixtures/subtests_sample/test_subtests.py::Table::test_all_cases_pass PASSED [ 33%]
+fixtures/subtests_sample/test_subtests.py::Table::test_one_case_fails 
+fixtures/subtests_sample/test_subtests.py::Table::test_one_case_fails PASSED [ 66%]
+fixtures/subtests_sample/test_subtests.py::Table::test_plain PASSED      [100%]
+
+=================================== FAILURES ===================================
+_______________________ Table.test_one_case_fails (i=1) ________________________
+
+self = <fixtures.subtests_sample.test_subtests.Table testMethod=test_one_case_fails>
+
+    def test_one_case_fails(self):
+        for i in range(3):
+            with self.subTest(i=i):
+>               self.assertNotEqual(i, 1)
+E               AssertionError: 1 == 1
+
+fixtures/subtests_sample/test_subtests.py:10: AssertionError
+==================================== PASSES ====================================
+__________________________ Table.test_all_cases_pass ___________________________
+----------------------------- Captured stdout call -----------------------------
+SUBPASSED(word='a b') [ 33%]
+fixtures/subtests_sample/test_subtests.py::Table::test_all_cases_pass SUBPASSED(word='[x]') [ 33%]
+fixtures/subtests_sample/test_subtests.py::Table::test_all_cases_pass SUBPASSED(word='ü') [ 33%]
+__________________________ Table.test_one_case_fails ___________________________
+----------------------------- Captured stdout call -----------------------------
+SUBPASSED(i=0) [ 66%]
+fixtures/subtests_sample/test_subtests.py::Table::test_one_case_fails SUBFAILED(i=1) [ 66%]
+fixtures/subtests_sample/test_subtests.py::Table::test_one_case_fails SUBPASSED(i=2) [ 66%]
+=========================== short test summary info ============================
+PASSED fixtures/subtests_sample/test_subtests.py::Table::test_all_cases_pass
+PASSED fixtures/subtests_sample/test_subtests.py::Table::test_one_case_fails
+PASSED fixtures/subtests_sample/test_subtests.py::Table::test_plain
+SUBFAILED(i=1) fixtures/subtests_sample/test_subtests.py::Table::test_one_case_fails
+================ 1 failed, 3 passed, 5 subtests passed in 0.02s ================

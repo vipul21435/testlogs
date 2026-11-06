@@ -6,6 +6,11 @@ Summary lines (``-rA``) look like ``PASSED tests/test_a.py::test_x`` or
 summary wins, because a test's verbose line can be split by captured output.
 The final ``==== 3 passed in 0.02s ====`` line marks a complete log; without
 it the run is reported incomplete.
+
+pytest 9 reports ``unittest`` subtests itself: the parent test is still printed
+``PASSED`` and each failing subtest gets a ``SUBFAILED(i=1) node::id`` summary row.
+A test with a failing subtest is recorded as failed, which is what JUnit XML and
+``unittest -v`` say about the same test; passing subtests are only counted.
 """
 
 from __future__ import annotations
@@ -35,6 +40,11 @@ _SUMMARY = re.compile(
     r"^(?P<status>PASSED|FAILED|SKIPPED|ERROR|XFAIL|XPASS)\s+"
     r"(?:\[\d+\]\s+)?(?P<id>\S+?(?:::\S.*?|:\d+)?)(?:\s+-\s+.*)?$"
 )
+_SUBTEST = re.compile(
+    r"^SUB(?P<status>FAILED|PASSED|SKIPPED)\((?P<params>.*?)\)\s+"
+    r"(?P<id>[^\s:]+::.*?)(?:\s+-\s+.*)?$"
+)
+_SUBTEST_COUNT = re.compile(r"(?P<n>\d+) subtests? (?P<what>passed|failed|skipped)")
 _SUMMARY_HEADER = re.compile(r"^=+ short test summary info =+$")
 _FINAL = re.compile(
     r"^=+ .*\b(?:passed|failed|error|errors|skipped|xfailed|xpassed|no tests ran)\b"
@@ -61,6 +71,7 @@ def parse(lines: list[str]) -> Run:
     verbose: list[TestResult] = []
     summary: list[TestResult] = []
     durations: dict[str, float] = {}
+    subfailed: dict[str, int] = {}
     in_summary = False
     complete = False
     for raw in lines:
@@ -73,6 +84,8 @@ def parse(lines: list[str]) -> Run:
         if _FINAL.match(line):
             complete = True
             in_summary = False
+            for m in _SUBTEST_COUNT.finditer(line):
+                run.notes.append(f"pytest counts {m.group('n')} subtests {m.group('what')}")
             continue
         m = _DURATION.match(line)
         if m:
@@ -80,6 +93,11 @@ def parse(lines: list[str]) -> Run:
             durations[tid] = max(durations.get(tid, 0.0), float(m.group("secs")))
             continue
         if in_summary:
+            m = _SUBTEST.match(line)
+            if m:
+                if m.group("status") == "FAILED":
+                    subfailed[m.group("id")] = subfailed.get(m.group("id"), 0) + 1
+                continue
             m = _SUMMARY.match(line)
             if m:
                 tid = m.group("id")
@@ -106,6 +124,16 @@ def parse(lines: list[str]) -> Run:
         if r.id not in status:
             order.append(r.id)
         status[r.id] = r.status
+    for tid in subfailed:
+        if tid not in status:
+            order.append(tid)
+        if status.get(tid) not in (Status.FAILED, Status.ERROR):
+            status[tid] = Status.FAILED
+    if subfailed:
+        n = sum(subfailed.values())
+        run.notes.append(
+            f"{n} failing subtests in {len(subfailed)} tests: those tests are recorded as failed"
+        )
     run.results = [TestResult(i, status[i], _file_of(i), durations.get(i)) for i in order]
     run.incomplete = not complete
     if run.incomplete:

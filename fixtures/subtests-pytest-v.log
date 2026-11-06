@@ -1,0 +1,28 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.2.0, pluggy-1.7.0 -- /work/.venv/bin/python3
+rootdir: /work
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 3 items
+
+fixtures/subtests_sample/test_subtests.py::Table::test_all_cases_pass 
+fixtures/subtests_sample/test_subtests.py::Table::test_all_cases_pass PASSED [ 33%]
+fixtures/subtests_sample/test_subtests.py::Table::test_one_case_fails 
+fixtures/subtests_sample/test_subtests.py::Table::test_one_case_fails PASSED [ 66%]
+fixtures/subtests_sample/test_subtests.py::Table::test_plain PASSED      [100%]
+
+=================================== FAILURES ===================================
+_______________________ Table.test_one_case_fails (i=1) ________________________
+
+self = <fixtures.subtests_sample.test_subtests.Table testMethod=test_one_case_fails>
+
+    def test_one_case_fails(self):
+        for i in range(3):
+            with self.subTest(i=i):
+>               self.assertNotEqual(i, 1)
+E               AssertionError: 1 == 1
+
+fixtures/subtests_sample/test_subtests.py:10: AssertionError
+=========================== short test summary info ============================
+SUBFAILED(i=1) fixtures/subtests_sample/test_subtests.py::Table::test_one_case_fails
+================ 1 failed, 3 passed, 5 subtests passed in 0.02s ================

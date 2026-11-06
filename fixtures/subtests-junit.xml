@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="9" time="0.018" timestamp="2026-01-01T00:00:00" hostname="localhost"><testcase classname="fixtures.subtests_sample.test_subtests.Table" name="test_all_cases_pass" time="0.003" /><testcase classname="fixtures.subtests_sample.test_subtests.Table" name="test_one_case_fails" time="0.008"><failure message="AssertionError: 1 == 1">self = &lt;fixtures.subtests_sample.test_subtests.Table testMethod=test_one_case_fails&gt;
+
+    def test_one_case_fails(self):
+        for i in range(3):
+            with self.subTest(i=i):
+&gt;               self.assertNotEqual(i, 1)
+E               AssertionError: 1 == 1
+
+fixtures/subtests_sample/test_subtests.py:10: AssertionError</failure></testcase><testcase classname="fixtures.subtests_sample.test_subtests.Table" name="test_plain" time="0.000" /></testsuite></testsuites>
