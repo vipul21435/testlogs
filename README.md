@@ -199,7 +199,10 @@ Data: the test suite of [more-itertools](https://github.com/more-itertools/more-
 (MIT licence, checked on its
 [LICENSE page](https://github.com/more-itertools/more-itertools/blob/master/LICENSE)),
 commit `f42daddf205f`, run here with Python 3.12.13 and pytest 9.2.0 in four ways, plus
-the same suite at release `v10.5.0` run with that release's code. The logs stay outside
+the same suite at release `v10.5.0` run with that release's code; and the mocha suite of
+[bytes.js](https://github.com/visionmedia/bytes.js) (MIT licence, checked on its
+[LICENSE page](https://github.com/visionmedia/bytes.js/blob/master/LICENSE)), commit
+`9ddc13b6c66e`, run with mocha 10.8.2 under Node 25.9.0. The logs stay outside
 the repo; the scripts regenerate them:
 
 ```
@@ -207,13 +210,14 @@ bash examples/real_data.sh DATA_DIR              # clone, run the suite, write D
 uv run python examples/real_data.py DATA_DIR     # parse, time, cross-check
 ```
 
-Parse times are the median of 5 calls of `testlogs.parse` on a macOS laptop.
+Parse times are the median of 9 calls of `testlogs.parse` on a macOS laptop
+(`real_data.py DATA_DIR --repeats 9`); repeated runs moved them by up to about a third.
 
 | log | format | size | lines | records | passed | summary count | incomplete | parse time |
 |---|---|---|---|---|---|---|---|---|
-| pytest -v | pytest | 0.07 MB | 863 | 771 | 771 | 771 | no | 3.5 ms |
-| pytest -v, colour | pytest | 0.08 MB | 863 | 771 | 771 | 771 | no | 4.5 ms |
-| pytest -v -rA --durations=0 | pytest | 2.01 MB | 23,046 | 771 | 771 | 771 | no | 137.7 ms |
+| pytest -v | pytest | 0.07 MB | 863 | 771 | 771 | 771 | no | 5.2 ms |
+| pytest -v, colour | pytest | 0.08 MB | 863 | 771 | 771 | 771 | no | 6.1 ms |
+| pytest -v -rA --durations=0 | pytest | 2.01 MB | 23,047 | 771 | 771 | 771 | no | 180.7 ms |
 | pytest --junitxml | junit | 0.07 MB | 1 | 771 | 771 | - | no | 1.3 ms |
 | python -m unittest -v | unittest | 0.08 MB | 1,231 | 935 | 935 | 935 | no | 4.5 ms |
 
@@ -229,6 +233,10 @@ before these numbers were taken: unittest doctest lines collapsed into two ids (
 distinct ids for 935 tests). The 21,203 subtests in this suite also led to a probe of
 pytest 9's subtest output, which showed that `SUBFAILED` rows were not read; the
 `fixtures/subtests_sample/` logs come from that probe.
+
+bytes.js: the spec reporter log gives 30 records (summary count 30) and the TAP log 30;
+matched with `" > "` read as a space (mocha's TAP reporter joins titles with spaces),
+the diff is empty.
 
 Release diff: `v10.5.0` gives 664 records (663 passed, 1 skipped); against the current
 run, 0 fixed, 0 broken, 119 appeared, 12 vanished, 0 other.
