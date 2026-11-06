@@ -156,3 +156,19 @@ def test_vitest_text_reporters_record_a_suite_that_fails_to_load():
         assert "vitest test files: 2 failed (2)" in run.notes
     report = parse((FIX / "vitest-report-broken.json").read_text(encoding="utf-8"))
     assert [r.status for r in report.results if r.id.endswith(broken)] == [Status.ERROR]
+
+
+def test_jest_bullets_match_verbose_names_holding_the_level_separator():
+    run = parse((FIX / "jest-verbose-edge.log").read_text(encoding="utf-8"))
+    assert [(r.id, r.status) for r in run.results] == [
+        ("jest-edge/arrow.test.js::second > a › b", Status.FAILED),
+        ("jest-edge/arrow.test.js::second > plain", Status.PASSED),
+        ("jest-edge/broken.test.js", Status.ERROR),
+    ]
+
+
+def test_jest_suite_that_fails_to_run_is_an_error_named_by_its_file():
+    run = parse((FIX / "jest-default-edge.log").read_text(encoding="utf-8"))
+    assert ("jest-edge/broken.test.js", Status.ERROR) in [(r.id, r.status) for r in run.results]
+    report = parse((FIX / "jest-report-edge.json").read_text(encoding="utf-8"))
+    assert [r.status for r in report.results if r.id.endswith("broken.test.js")] == [Status.ERROR]

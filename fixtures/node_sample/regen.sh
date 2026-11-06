@@ -13,6 +13,11 @@ J="npx jest --config jest.config.json --runInBand"
 $J > $OUT/jest-default.log 2>&1
 $J --verbose > $OUT/jest-verbose.log 2>&1
 $J --json --outputFile=$OUT/jest-report.json > /dev/null 2>&1
+# A test file that fails to load, and a test whose name holds "›" (jest-edge/).
+JE="npx jest --config jest-edge.config.json --runInBand"
+$JE > $OUT/jest-default-edge.log 2>&1
+$JE --verbose > $OUT/jest-verbose-edge.log 2>&1
+$JE --json --outputFile=$OUT/jest-report-edge.json > /dev/null 2>&1
 V="npx vitest run --config vitest.config.mjs"
 $V > $OUT/vitest-default.log 2>&1
 $V --reporter=verbose > $OUT/vitest-verbose.log 2>&1

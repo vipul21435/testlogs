@@ -56,10 +56,22 @@ def parse(lines: list[str]) -> Run:
         m = _BULLET.match(line)
         if m:
             in_tree = False
-            if m.group("path") == "Console":
+            raw_path = m.group("path")
+            if raw_path == "Console":
                 continue
-            path = " > ".join(p.strip() for p in m.group("path").split("›"))
-            bullets.append((file, path))
+            if raw_path == "Test suite failed to run":
+                # The file never ran; the JSON report records it the same way.
+                bullets.append((file, ""))
+                continue
+            # A test name may hold "›" itself: match the bullet against the verbose
+            # names first, and split it into levels only when none matches.
+            for tid in verbose_ids:
+                head, _, name = tid.partition("::")
+                if head == file and name.replace(" > ", " › ") == raw_path:
+                    bullets.append((file, name))
+                    break
+            else:
+                bullets.append((file, " > ".join(p.strip() for p in raw_path.split("›"))))
             continue
         if not in_tree or not line.strip():
             continue
@@ -85,9 +97,10 @@ def parse(lines: list[str]) -> Run:
             stack.append((indent, line.strip()))
     # Default reporter: failures only appear as bullets.
     for file, path in bullets:
-        tid = f"{file}::{path}"
+        tid = f"{file}::{path}" if path else file
         if tid not in verbose_ids:
-            run.results.append(TestResult(tid, Status.FAILED, file))
+            status = Status.FAILED if path else Status.ERROR
+            run.results.append(TestResult(tid, status, file))
             verbose_ids.add(tid)
     if bullets and len(verbose_ids) == len(bullets):
         run.notes.append("default reporter: only failed tests are named individually")

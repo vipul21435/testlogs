@@ -1,0 +1,42 @@
+FAIL jest-edge/arrow.test.js
+  second
+    ✕ a › b (1 ms)
+    ✓ plain
+
+  ● second › a › b
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 2
+    Received: 1
+
+      2 | describe('second', () => {
+      3 |   test('a › b', () => {
+    > 4 |     expect(1).toBe(2);
+        |               ^
+      5 |   });
+      6 |   test('plain', () => {});
+      7 | });
+
+      at Object.toBe (arrow.test.js:4:15)
+
+FAIL jest-edge/broken.test.js
+  ● Test suite failed to run
+
+    Cannot find module './does-not-exist' from 'broken.test.js'
+
+      1 | // A test file that fails to load: it requires a module that does not exist.
+    > 2 | const missing = require('./does-not-exist');
+        |                 ^
+      3 |
+      4 | test('never runs', () => {
+      5 |   missing();
+
+      at Resolver._throwModNotFoundError (../node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (broken.test.js:2:17)
+
+Test Suites: 2 failed, 2 total
+Tests:       1 failed, 1 passed, 2 total
+Snapshots:   0 total
+Time:        0.16 s, estimated 1 s
+Ran all test suites.
